@@ -1,0 +1,296 @@
+{
+  "name": "AI-Email Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "id": "1cdc2008-defd-4da4-b252-52613438a073",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "position": [
+        840,
+        300
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2h2s2AVV8GDAHrDN",
+          "name": "Autenticação na API do Google Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"label\": \"Label name\", \n\"label ID\": \"label ID\" \n}"
+      },
+      "id": "1cf756fa-03eb-4fba-b82a-3d6a3dbe8cc4",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        1820,
+        600
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-20250514",
+          "cachedResultName": "Claude Sonnet 4"
+        },
+        "options": {}
+      },
+      "id": "557aa035-f828-4668-b260-1fd33c225b80",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "position": [
+        1260,
+        600
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "anthropicApi": {
+          "id": "wlYZvQS9Wma0pGTh",
+          "name": "Autenticação na API do Anthropic"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Run the task.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=**Objetivo:** Analisar os dados de e-mail fornecidos e classificá-los com o rótulo mais apropriado. **Utilizar a funcionalidade de verificar o histórico de e-mails anteriores (e-mails enviados ou recebidos do remetente por `paulo.moreira.n8n@gmail.com`)** para determinar se esta é uma primeira interação (e-mail frio) ou parte de um relacionamento existente. Este contexto é crucial para uma rotulagem precisa, especialmente para distinguir entre Marketing, Notificações e FYI. Responda com *apenas* o ID do Rótulo correspondente.\n\n**Seu endereço de e-mail (para contexto):** `paulo.moreira.n8n@gmail.com`\n\n**Principais recursos (a serem usados ​​pelo sistema que executa este prompt):**\n* **Verificar histórico de e-mails anteriores:** Antes da classificação completa, determine se existe alguma correspondência de e-mail anterior entre `paulo.moreira.n8n@gmail.com` e `{{ $json.from.value[0].address }}`. Esta verificação deve resultar em \"Sim\" (histórico existente) ou \"Não\" (nenhum histórico encontrado).\n\n**Dados de e-mail de entrada (do item JSON n8n para o e-mail *atual*):**\n* **E-mail do Remetente:** `{{ $json.from.value[0].address }}`\n* **Nome do Remetente:** `{{ $json.from.value[0].name }}`\n* **E-mails de Destinatários Diretos (para):** `{{ $json.to.value.map(r => r.address).join(', ') }}`\n* **E-mails de Destinatários CC:** `{{ $json.cc.value.map(r => r.address).join(', ') }}` *(Adicionei isso com base no seu JSON, use se preenchido)*\n* **Assunto:** `{{ $json.subject }}`\n* **Corpo (Texto Simples):** `{{ $json.text }}`\n* **Marcadores Existentes do Gmail (para o e-mail atual):** `{{ $json.labelIds.join(', ') }}`\n* **Cabeçalho Enviado Automaticamente:** `{{ $json.headers['auto-submitted'] }}`\n* **Cabeçalho do Remetente Original (se diferente de De):** `{{ $json.headers.sender }}`\n* **Cabeçalho em Resposta (para e-mail atual):** `{{ $json.headers['in-reply-to'] }}`\n* **Cabeçalho de Referências (para o e-mail atual):** `{{ $json.headers.references }}`\n* **Cabeçalho de Lista de Cancelamento de Inscrição:** `{{ $json.headers['list-unsubscribe'] }}`\n* **Cabeçalho de Precedência:** `{{ $json.headers.precedence }}` (e.g., \"Bulk\")\n\n**Rótulos, Descrições e Lógica de Priorização:**\n\n**Orientações Sobre Como Usar o Histórico de E-mail Anterior e Links de Cancelamento de Assinatura:**\n* **Histórico de E-mail Anterior = \"Não\":** Forte indicador de um **e-mail frio/não solicitado**.\n    * Se for um discurso promocional/de vendas: Provavelmente \"Marketing\"\n. * Se for excepcionalmente personalizado e de alto valor para Trigify: Raramente \"responderá..\"\n* **Histórico de E-mail Anterior = \"Sim\":** Indica um **relacionamento/conversa existente**.\n * Se for uma atualização sobre termos, políticas ou alterações de serviço desta entidade conhecida: Provavelmente \"Notificação.\"\n    * Se for um boletim informativo que Paulo assinou: Poderia ser \"FYI\" ou \"Marketing\" com base no conteúdo.\n    * Se for uma mensagem direta que exige ação: Provavelmente \"Para Responder\".\"\n* **Cabeçalho `Cancelar Inscrição` ou links de cancelamento de inscrição no corpo:**\n * Comum em e-mails de \"Marketing\".\n    * Também presente em muitos e-mails legítimos de \"Notificação\" (ex: atualizações de serviço, mudanças de política como o exemplo do DPA) e alguns boletins informativos \"FYI\" para conformidade.\n    * **Portanto, um link de cancelamento de assinatura por si só não define a categoria. Considere-o juntamente com o Histórico de E-mails Anteriores e o conteúdo/finalidade do e-mail.**\n* **Cabeçalho `Precedência: Em Massa`:** Geralmente indica envios em massa, comum para Marketing, Notificações e alguns Textos Informativas.\n\n---\n\n* **Para Responder (ID do Rótulo: `Label_5151750749488724401`):**\n    * **Critérios primários:** Requer ação/resposta direta e oportuna de `paulo.moreira.n8n@gmail.com`.\n    * **Indicadores-Chave (especialmente se o Histórico de E-mails Anteriores for \"Sim\"):** Perguntas diretas para Paulo, tarefas atribuídas, solicitações de informações para o Trigify, prazos para Paulo, parte de uma conversa ativa (indicada por `Em resposta a`/`Referências`).\n    * **Priorização do Processo de Vendas (Leads Quentes/Processos Ativos - normalmente Histórico de E-mails Anteriores = \"Sim\"):** Discussões contínuas e ativas sobre o processo de vendas do Trigify.\n    * **Vendas Frias de Alto Valor (Casos Excepcionais - Histórico de E-mails Anterior = \"Não\"):** Oportunidade estratégica altamente personalizada para a Trigify, que exige a atenção pessoal do Paulo. (O padrão para vendas frias é \"Marketing\").\n\n* **Para sua informação (ID do Rótulo: `Label_7518716752151077752`):**\n    * **Critérios Primários:** Para conhecimento de Paulo; nenhuma ação/resposta imediata necessária.\n    * **Principais Indicadores:**\n        * Paulo é Copiado, ação primária para outros.\n        * Anúncios gerais, boletins informativos *não promocionais* de *entidades/assinaturas conhecidas* (Histórico de E-mail Anterior = \"Sim\" ou o remetente é claramente uma fonte assinante) que não são notificações críticas de serviço.\n        * Atualizações informativas dentro de projetos em andamento onde Paulo não é o ator principal.\n    * Se um e-mail for um envio em massa (`Precedência: Em Massa`, `Lista-Cancelar Assinatura` presente) de uma *entidade conhecida* (Histórico de E-mails Anteriores = \"Sim\") e for puramente informativo, sem uma chamada direta para ação ou atualização crítica de serviço, pode ser \"Para sua informação.\"\n\n* **Comentário (ID do Rótulo: `Label_1470120230130814788`):**\n    * Comentário/feedback sobre um documento, tarefa, sistema (ex:, Assunto \"Novo comentário em...\").\n\n* **Notificação (ID do rótulo: `Label_9`):**\n    * **Critérios Principais:** Fornece atualizações ou alertas importantes, geralmente não promocionais, sobre um serviço, conta ou sistema existente que `paulo.moreira.n8n@gmail.com` ou o Trigify utiliza ou pelo qual é afetado. A ação normalmente consiste em conscientização, possível alteração de configuração ou anotação de um prazo, em vez de uma resposta em tom de conversa..\n    * **Principais Indicadores:**\n        * **Atualizações de Provedores de Serviços Conhecidos (Histórico de E-mail Anterior = \"Sim\" é comum):**\n            * Alterações nos Termos de Serviço, Políticas de Privacidade, Contratos de Processamento de Dados (CPDs como exemplo \"Simples\").\n            * Anúncios de disponibilidade de serviços críticos (interrupções, manutenção).\n            * Alertas de segurança relacionados a uma conta que Paulo usa.\n            * Atualizações importantes sobre recursos ou funcionalidades de um serviço do qual o Trigify depende, que não são principalmente novos recursos de marketing.\n        * Alertas gerados pelo sistema (ex: `Cabeçalho Enviado Automaticamente` = `gerado automaticamente`), como notificações de mídia social, lembretes de calendário sem reunião, alguns alertas de transações financeiras.\n        * As linhas de assunto podem conter: \"Atualização importante\", \"Notificação de serviço\", \"Alteração de política\", \"Atualização do CPD\", \"Alerta de segurança\".\n        * Mesmo que um link `Cancelar Inscição na Lista` esteja presente (para conformidade), se o conteúdo principal for uma atualização crítica de serviço/conta/legal de uma empresa com a qual a Paulo/Trigify faz negócios, é uma \"Notificação\".\n        * Os `Rótulos Existentes do Gmail` podem incluir `ATUALIZAÇÕES_DE_CATEGORIA`.\n\n* **Atualização da Reunião (ID do Rótulo: `Label_7958083858424702466`):**\n    * Atualização especifica sobre uma reunião agendada (por exemplo, \"Aceito:\", \"Recusado:\", \"Convite Atualizado:\", \"Cancelado:\").\n\n* **Marketing (ID do Rótulo: `Label_5274550748854913384`):**\n    * **Principais Critérios:** Proposta de venda promocional não solicitada, propaganda ou boletim informativo geral de marketing, especialmente se **Histórico de E-mail Anterior = \"Não\"**\n    * **Principais Indicadores:**\n        * **Nenhum histórico de e-mail anterior foi encontrado com o `E-mail do Remetente`,** E o e-mail tem como objetivo principal vender um produto/serviço ou promover uma empresa/evento para Paulo/Trigify.\n        * O conteúdo é genérico, focado em recursos/benefícios sem forte personalização dos projetos conhecidos e ativos de Paulo.\n        * Contém um `Cabeçalho de Cancelamento de Inscrição em Lista` E o conteúdo é promocional.\n        * `Rótulos Existentes do Gmail` podem incluir `CATEGORY_PROMOTIONS`.\n    * Se **Histórico de E-mail Anterior = \"Sim\"**: Ainda pode ser \"Marketing\" se for um boletim informativo/oferta claramente promocional de um contato conhecido que não se enquadra em \"Notificação\" ou exige um \"Para responder\".\n\n---\n\n**Dados de E-mail para Classificação (resumo):**\n* **Histórico de E-mail Anterior com Remetente (Sim/Não) - Do novo recurso**\n* E-mail do Remetente: `{{ $json.from.value[0].address }}`\n* Nome do Remetente: `{{ $json.from.value[0].name }}`\n* E-mails de Destinatários Diretos (Para): `{{ $json.to.value.map(r => r.address).join(', ') }}`\n* E-mails de Destinatários CC: `{{ $json.cc.value.map(r => r.address).join(', ') }}`\n* Assunto: `{{ $json.subject }}`\n* Corpo (Texto Simples): `{{ $json.text }}`\n* Marcadores Existentes do Gmail: `{{ $json.labelIds.join(', ') }}`\n* Cabeçalho Enviado Automaticamente: `{{ $json.headers['auto-submitted'] }}`\n* Cabeçalho do Remetente Original: `{{ $json.headers.sender }}`\n* Cabeçalho em Resposta: `{{ $json.headers['in-reply-to'] }}`\n* Cabeçalho de Referências: `{{ $json.headers.references }}`\n* Cabeçalho de Cancelamento de Inscrição em Lista:`{{ $json.headers['list-unsubscribe'] }}`\n* Cabeçalho de Precedência: `{{ $json.headers.precedence }}`\n\n**Saída:** [Forneça SOMENTE o ID do Rótulo aqui]"
+        }
+      },
+      "id": "be7dfd12-a710-46b4-bfdf-4a69ade80002",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1380,
+        300
+      ],
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "filters": {
+          "q": "=from:{{ $fromAI('email') }}"
+        }
+      },
+      "id": "f9206507-8715-48d8-a64a-a1f6290408f5",
+      "name": "Get Email",
+      "type": "n8n-nodes-base.gmailTool",
+      "position": [
+        1640,
+        600
+      ],
+      "webhookId": "c30886d9-3d98-464d-82b8-e7649c87610a",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2h2s2AVV8GDAHrDN",
+          "name": "Autenticação na API do Google Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "labelIds": [
+            "SENT"
+          ],
+          "q": "=to:{{ $fromAI('email') }}"
+        }
+      },
+      "id": "77c76d0a-25e5-4de9-989f-9b8a72088319",
+      "name": "Check Sent",
+      "type": "n8n-nodes-base.gmailTool",
+      "position": [
+        1440,
+        600
+      ],
+      "webhookId": "0854fad3-622e-44b4-9d61-5aae13c61433",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2h2s2AVV8GDAHrDN",
+          "name": "Autenticação na API do Google Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## AI-Email Manager = Classificação Inteligente do Gmail By Max Mitcham\n\n#### Este fluxo de automação foi projetado para monitorar automaticamente as mensagens recebidas do Gmail, analisar seu conteúdo e contexto usando IA e classificá-las de forma inteligente com rótulos apropriados para melhor organização e priorização de e-mails.\n\n### ⚙️ Como funciona (passo a passo):\n📧 Monitoramento do Gmail (Gatilho)\n- Monitora continuamente sua caixa de entrada do Gmail:\n. Verifica novos e-mails a cada minuto\n. Captura todas as mensagens recebidas automaticamente\n. Aciona o Workflow para cada novo e-mail recebido\n\n### 📖 Extração de Conteúdo de E-mail\n- Recupera detalhes completos do e-mail:\n. Corpo e cabeçalhos completos do e-mail\n. Informações do remetente e listas de destinatários\n. Linha de assunto e metadados\n. Rótulos e categorias existentes do Gmail\n. Informações de encadeamento de e-mails (respostas/encaminhamentos)\n\n### 🔍 Análise do Histórico de E-mails\n- O agente de IA verifica o contexto do relacionamento:\n. Busca e-mails anteriores do mesmo remetente\n. Verifica a pasta de mensagens enviadas para correspondências enviadas anteriormente\n. Determina se este é um primeiro contato (e-mail frio)\n. Analisa o histórico de conversas\n\n### 🤖 Agente de Classificação Inteligente\n- Categorização avançada de IA usando:\n. Claude Sonnet 4 para análise sofisticada de e-mails\n. Classificação contextual com base no histórico de e-mails\n. Análise de conteúdo para detecção de intenção e urgência\n. Cabeçalho Análise para e-mails automatizados vs. enviados por humanos\n\n### 🏷️ Atribuição de Rótulos Inteligentes\n- Aplica automaticamente os rótulos apropriados do Gmail:\n. Para responder: Requer ação/resposta direta\n. Para sua informação: Para conscientização, nenhuma ação necessária\n. Notificação: Atualizações de serviço, alterações de política\n. Marketing: Conteúdo promocional e argumentos de venda\n. Atualização de reunião: Comunicações relacionadas ao calendário\n. Comentário: Feedback de documento/tarefa\n\n### 📋 Processamento Estruturado\n- Garante a consistência dos rótulos:\n. Usa análise de saída estruturada para confiabilidade\n. Retorna um ID de rótulo específico para integração com o Gmail\n. Aplica o rótulo automaticamente ao e-mail\n. Mantém a precisão da classificação\n\n### 🛠️ Ferramentas utilizadas:\n- n8n: Plataforma de automação de fluxo de trabalho\n- API do Gmail: Monitoramento de e-mail e gerenciamento de rótulos\n- Anthropic Claude: Análise avançada de conteúdo de e-mail\n- Ferramentas do Gmail: Verificação e pesquisa do histórico de e-mail\n- Analisador de Saída Estruturada: Respostas consistentes de IA\n\n### 📦 Principais recursos:\n- Monitoramento e classificação de e-mails em tempo real\n- Análise contextual usando o histórico de e-mails\n- Inteligente Detecção de e-mails frios vs. mornos\n- Várias categorias de classificação para organização\n- Aplicação automática de rótulos do Gmail\n- Análise de cabeçalho para detecção automatizada de e-mails\n- Rastreamento de conversas com base em threads\n\n### 🚀 Casos de Uso Ideais:\n- Executivos ocupados gerenciando altos volumes de e-mails\n- Profissionais de vendas priorizando comunicações com clientes em potencial\n- Equipes de suporte organizando consultas de clientes\n- Equipes de marketing filtrando conteúdo promocional\n- Qualquer pessoa que queira organização automatizada de e-mails\n- Equipes que precisam de priorização consistente de e-mails",
+        "height": 1740,
+        "width": 680,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "9219a7c8-750c-434a-963a-c786bfdc3265",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "id": "fc87b0b6-e9b4-4afd-93b6-397d475cb394",
+      "name": "Get a message",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1080,
+        300
+      ],
+      "webhookId": "01c91a6b-4d45-4630-8e81-0f82ee5d6524",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2h2s2AVV8GDAHrDN",
+          "name": "Autenticação na API do Google Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Get a message').item.json.id }}",
+        "labelIds": "={{ $json.output['label ID'] }}"
+      },
+      "id": "efeb8402-0a98-4139-b5ee-a68afc2147ac",
+      "name": "Add label to message",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1900,
+        300
+      ],
+      "webhookId": "575a4038-3b07-46b9-be69-39cfc1d47d7e",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2h2s2AVV8GDAHrDN",
+          "name": "Autenticação na API do Google Gmail"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sent": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6cdbde06-8ac3-4dc1-a7a7-513fd27045c6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f8fb8b7c9f227cabfd3532e55a910625bd5265edfac26d35ea7f1663405904ec"
+  },
+  "id": "gt29FWzk4JIUMOe3",
+  "tags": [
+    {
+      "name": "Anthropic",
+      "id": "ifi5pBESUuJGdJEy",
+      "createdAt": "2025-07-02T13:39:52.810Z",
+      "updatedAt": "2025-07-02T13:39:52.810Z"
+    }
+  ]
+}

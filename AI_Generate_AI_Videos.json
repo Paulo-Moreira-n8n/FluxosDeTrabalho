@@ -1,0 +1,763 @@
+{
+  "name": "AI-Generate AI Videos",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $('Create Video').item.json.request_id }}/status ",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "535af0ef-0b59-4770-923b-d77f9c4345b0",
+      "name": "Get status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        360,
+        1200
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "id": "acd06573-0ad5-4125-8c04-9cd60f9d7b21",
+      "name": "Wait 60 sec.",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        180,
+        1200
+      ],
+      "webhookId": "490facb8-d0ae-402e-ab59-a87720cf0bdd",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "content": "## PASSO 1 - PLANILHA DO GOOGLE\nCrie uma [Planilha do Google como esta](https://docs.google.com/spreadsheets/d/1pcoY9N_vQp44NtSRR5eskkL5Qd0N0BGq7Jh_4m-7VEQ/edit?)\n- na coluna *PROMPT* a descrição do vídeo que você deseja criar -\n- na coluna *DURAÇÃO* a duração do vídeo que você deseja criar. -\n   \nOBS: Deixe a coluna *VÍDEO* em branco. Ela será preenchida pelo sistema assim que o vídeo for criado",
+        "height": 200,
+        "width": 740
+      },
+      "id": "8e5178fd-f97c-40ee-8f44-55d7e2c5291d",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        660
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "383d112e-2cc6-4dd4-8985-f09ce0bd1781",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "COMPLETED"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9218e1d4-c8f4-46d7-9707-952e1ec112fd",
+      "name": "Completed?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        540,
+        1200
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1pcoY9N_vQp44NtSRR5eskkL5Qd0N0BGq7Jh_4m-7VEQ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pcoY9N_vQp44NtSRR5eskkL5Qd0N0BGq7Jh_4m-7VEQ/edit?usp=drivesdk",
+          "cachedResultName": "Video Google Veo3"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11ebWJvwwXHgvQld9kxywKQUvIoBw6xMa0g0BuIqHDxE/edit#gid=0",
+          "cachedResultName": "Foglio1"
+        },
+        "columns": {
+          "value": {
+            "VIDEO": "={{ $('Get Url Video').item.json.video.url }}",
+            "row_number": "={{ $('Get new video').item.json.row_number }}"
+          },
+          "schema": [
+            {
+              "id": "PROMPT",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "PROMPT",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "DURATION",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "DURATION",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "VIDEO",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "VIDEO",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "YOUTUBE_URL",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "YOUTUBE_URL",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "row_number"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c22acd61-2951-49e6-8e6d-d42ee65725f4",
+      "name": "Update result",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        380,
+        1460
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "content": "## PASSO 4 - FLUXO PRINCIPAL\n Inicie o Workflow manualmente ou periodicamente conectando o nó de Gatilho de Agendamento. Recomenda-se defini-lo com intervalos de 5 minutos.",
+        "height": 140,
+        "width": 740
+      },
+      "id": "22153996-c0bc-492b-a383-5d21b30fed74",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        800,
+        880
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## PASSO 2 - OBTENHA A CHAVE DE API (SUA CHAVE DE API)\n[Crie uma conta aqui](https://fal.ai/) e obtenha a CHAVE DE API.\nO nó Criar Imagem define um Cabeçalho de Autenticação e define:\n- Nome: Authorization\n- Valor: Key SUA CHAVE DE API",
+        "height": 140,
+        "width": 740
+      },
+      "id": "b6913af0-dd05-48bf-be54-f4fe2730b023",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        880
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "Set API Key created in Step 2",
+        "height": 200
+      },
+      "id": "5060b6c0-b2d3-453b-82fa-27bd0691a575",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -220,
+        1120
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/veo3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n     \"prompt\": \"{{$json.prompt}}\"\n}",
+        "options": {}
+      },
+      "id": "23f224f9-3f2b-4262-926c-3c8509354f37",
+      "name": "Create Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -160,
+        1160
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1UPpASNHeZ9l0lxi",
+          "name": "Autenticação no Serviço do  Ghost Genius LinkedIn"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "036ba349-3375-4bd6-a24a-6688e8def3ea",
+      "name": "Get Url Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -700,
+        1560
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1UPpASNHeZ9l0lxi",
+          "name": "Autenticação no Serviço do  Ghost Genius LinkedIn"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Get Url Video').item.json.video.url }}",
+        "options": {}
+      },
+      "id": "0b624ed8-8010-4375-9f2a-b34bbfe54de8",
+      "name": "Get File Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -80,
+        1560
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "name": "={{ $now.format('yyyyLLddHHmmss') }}-{{ $('Get Url Video').item.json.video.file_name }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1aHRwLWyrqfzoVC8HoB-YMrBvQ4tLC-NZ",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1aHRwLWyrqfzoVC8HoB-YMrBvQ4tLC-NZ",
+          "cachedResultName": "Fal.run"
+        },
+        "options": {}
+      },
+      "id": "d0b92713-f876-418c-a1c6-587f7d0f4210",
+      "name": "Upload Video",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        200,
+        1460
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.upload-post.com/api/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $('Generate title').item.json.message.content }}"
+            },
+            {
+              "name": "user",
+              "value": "YOUR_USERNAME"
+            },
+            {
+              "name": "platform[]",
+              "value": "youtube"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "video",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "55803fed-276e-4083-8e3a-1cbac139837c",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        200,
+        1720
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Input: {{ $('Get new video').item.json.PROMPT }}"
+            },
+            {
+              "content": "You are a YouTube SEO expert specialized in creating engaging and optimized titles.\n\nYour task is to generate an effective title for a YouTube video based on the user's video description.\n\nGUIDELINES:\n- Maximum 60 characters to avoid truncation\n- Use relevant keywords for SEO\n- Make the title catchy and clickable\n- Avoid excessive or misleading clickbait\n- Consider the target audience of the content\n- Use numbers, questions, or power words when appropriate\n- IMPORTANT: Generate the title in the same language as the input description\n\nOUTPUT FORMAT:\nProvide only the title, without additional explanations.\n\nEXAMPLE:\nInput: \"Tutorial video on how to cook perfect pasta carbonara\"\nOutput: \"PERFECT Carbonara in 10 Minutes - Chef's Secrets\"",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "51bdef1a-cc3f-4dbb-a0c6-de8bd5ca5d01",
+      "name": "Generate title",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        -400,
+        2220
+      ],
+      "typeVersion": 1.8,
+      "credentials": {
+        "openAiApi": {
+          "id": "40kIO1MBp35pQ05n",
+          "name": "Autenticação na API do OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1pcoY9N_vQp44NtSRR5eskkL5Qd0N0BGq7Jh_4m-7VEQ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pcoY9N_vQp44NtSRR5eskkL5Qd0N0BGq7Jh_4m-7VEQ/edit?usp=drivesdk",
+          "cachedResultName": "Video Google Veo3"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11ebWJvwwXHgvQld9kxywKQUvIoBw6xMa0g0BuIqHDxE/edit#gid=0",
+          "cachedResultName": "Foglio1"
+        },
+        "columns": {
+          "value": {
+            "VIDEO": "=",
+            "row_number": "={{ $('Get new video').item.json.row_number }}",
+            "YOUTUBE_URL": "https://youtu.be/{{ $json.results.youtube.video_id }}"
+          },
+          "schema": [
+            {
+              "id": "PROMPT",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "PROMPT",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "DURATION",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "DURATION",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "VIDEO",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "VIDEO",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "YOUTUBE_URL",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "YOUTUBE_URL",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "row_number"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8d5914ae-5721-4585-a136-f4004f5ff906",
+      "name": "Update Youtube URL",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        380,
+        1720
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "content": "Set YOUR_USERNAME in Step 3",
+        "height": 200,
+        "width": 180
+      },
+      "id": "5d051b88-9ace-4a3d-a782-34da5be9f3a9",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        180,
+        1660
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## PASSO 3 - Carregar o vídeo no YouTube\n- Crie sua chave de API em [Upload-Post Manage Api Keys](https://app.upload-post.com/) 10 uploads GRATUITOS por mês\n- Defina o Cabeçalho de Autenticação:\n-- Nome: Authorization\n--Valor: Apikey SUA_CHAVE_DA_API\n- Crie perfis para gerenciar suas contas de mídia social. O Perfil que você escolher será usado no campo SEU_NOME_DE_USUÁRIO (ex: teste1 ou teste2).",
+        "height": 200,
+        "width": 740
+      },
+      "id": "618453c5-3ec1-4899-a254-05e61d6f6880",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        800,
+        660
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Gere vídeos de IA com o Google Veo3, salve no Google Drive e envie para o YouTube.\n\nEste Workflow permite que os usuários **gerem vídeos de IA** usando o **Google Veo3**, salvem os vídeos no **Google Drive**, gerem títulos otimizados para o YouTube com o Groq e **enviem automaticamente para o YouTube**. Todo o processo é acionado por um Formulário n8n que atua como interface central para entrada de dados.\n\n\nEste fluxo automatiza a criação, o envio e o rastreamento de vídeos, garantindo uma integração perfeita entre as Planilhas Google, o Google Drive, o Google Veo3 e o YouTube.",
+        "height": 360,
+        "width": 740,
+        "color": 3
+      },
+      "id": "7f18544c-658e-415a-8616-e22ded688a14",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -780,
+        640
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Benefícios deste Workflow\n💡 **Interface Sem Código:** Acione a partir de um formulário n8n e controle o pipeline de produção de vídeo em uma Planilha Google.\n\n⚙️ **Automação Total:** Uma vez configurado, todo o processo de geração e publicação de vídeos é executado sem intervenção humana.\n\n🧠 **Criatividade Potencializada por IA:**\nGera títulos envolventes para o YouTube usando Groq.\nUtiliza a IA avançada de vídeo generativo do Google Veo3.\n\n📁 **Armazenamento e Backup em Nuvem:** Armazena todos os vídeos gerados no Google Drive para proteção.\n\n📈 **Pronto para o YouTube:** Envia automaticamente para o YouTube com metadados corretos, economizando tempo e aumentando a visibilidade.\n\n🧪 **Escalável:** Projetado para processar múltiplos prompts de vídeo, percorrendo novas entradas no Planilhas Google.\n\n🔒 **API-First:** Utiliza comunicação segura baseada em API para todos os serviços.\n\n## Como Funciona\n1. **Gatilho:** O Workflow é iniciado manualmente, ao preencher o Formulário de Criação.\n\n2. **Criação do Vídeo:**\nO nó 'Definir dados' formata o prompt e a duração a partir da Planilha Google.\nO nó 'Criar Vídeo' envia uma solicitação à API Fal.run (Google Veo3) para gerar um vídeo com base no prompt.\n\n3. **Verificação de Status:**\nO nó 'Aguardar 60 Segundos' pausa a execução por 60 segundos.\nO nó 'Obter Status' verifica o status de geração do vídeo. Se o status for 'COMPLETED', o Workflow prossegue; caso contrário, aguarda novamente.\n\n5. **Processamento de Vídeo:**\nO nó 'Obter URL do Vídeo' busca a URL do vídeo.\nO nó 'Gerar Título' utiliza a OpenAI (GPT-4.1) via Groq para criar um título do YouTube otimizado para SEO.\nO nó 'Obter Arquivo de Vídeo' baixa o arquivo de vídeo.\n\n6. **Carga e atualização:**\nO nó 'Salvar vídeo' salva o vídeo no Google Drive.\nO nó 'Carregar no YouTube' carrega o vídeo no YouTube por meio da API Upload-Post.\nOs nós 'Atualizar URL do YouTube' e 'Atualizar Resultado' atualizam a Planilha Google com todos os dados do vídeo.\n\n## Etapas de configuração\n1. Configuração da Planilha Google:\nCrie a Planilha Google 'Video Google Veo3' com as colunas: DESCRIÇÃO, DURAÇÃO, VIDEO e YOUTUBE_URL.\nColoque o link da Planilha no nó 'Obter Novo Vídeo'.\n\n2. Chaves de API:\nObtenha uma chave de API Fal.run (para Veo3) e configure-a no nó 'Criar Vídeo' (Header: Authorization: Key YOURAPIKEY).\nObtenha uma chave de API do Upload-Post (para uploads do YouTube) e configure-a o nó 'Carregar no YouTube' (Header: Authorization: Apikey YOUR_API_KEY).\n\n3. Configuração de Carregamento do YouTube:\nSubstitua YOUR_USERNAME no nó 'Carregar no YouTube' pelo nome do seu perfil no Upload-Post.\n\n4. Agendar Gatilho:\nConfigure o nó 'Agendar Gatilho' para ser executado periodicamente (por exemplo, a cada 5 minutos).",
+        "height": 1540,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1500,
+        640
+      ],
+      "typeVersion": 1,
+      "id": "b0199de0-06db-4fa2-8d90-2c9f6af296a9",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        1800
+      ],
+      "id": "02f8334c-8660-4e1c-999d-ecd931459705",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "ESKLhwWXWEVzPqyp",
+          "name": "Autenticação na API do groq"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Você é um especialista em SEO para YouTube, especializado na criação de títulos envolventes e otimizados.\n\nSua tarefa é gerar um título eficaz para um vídeo do YouTube com base na descrição do vídeo do usuário.\n\nDIRETRIZES:\n- Máximo de 60 caracteres para evitar truncamento\n- Use palavras-chave relevantes para SEO\n- Crie um título atraente e clicável\n- Evite clickbait excessivo ou enganoso\n- Considere o público-alvo do conteúdo\n- Use números, perguntas ou palavras-chave quando apropriado\n- IMPORTANTE: Gere o título no mesmo idioma da descrição de entrada\n\nFORMATO DE SAÍDA:\nForneça apenas o título, sem explicações adicionais.\n\nEXEMPLO:\nEntrada: \"Vídeo tutorial sobre como preparar uma massa à carbonara perfeita\"\nSaída: \"Carbonara PERFEITA em 10 Minutos - Segredos do Chef\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        1560
+      ],
+      "id": "2ae8286b-a52c-401c-a057-a3dd329b89dc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "formTitle": "Descrição do Vídeo",
+        "formDescription": "Descreva o vídeo e defina a duração em minutos",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Descrição",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Duração",
+              "fieldType": "number",
+              "placeholder": "de 1 a 30 minutos"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -700,
+        1160
+      ],
+      "id": "25c380fc-4c72-479b-b162-206d555ce2f0",
+      "name": "Formulário de Criação",
+      "webhookId": "1b6e901c-ff8f-47b6-b2eb-01162489a479"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Completed?": {
+      "main": [
+        [
+          {
+            "node": "Get Url Video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 60 sec.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get status": {
+      "main": [
+        [
+          {
+            "node": "Completed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Video": {
+      "main": [
+        [
+          {
+            "node": "Wait 60 sec.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Update Youtube URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Video": {
+      "main": [
+        [
+          {
+            "node": "Update result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 60 sec.": {
+      "main": [
+        [
+          {
+            "node": "Get status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Url Video": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate title": {
+      "main": [
+        []
+      ]
+    },
+    "Get File Video": {
+      "main": [
+        [
+          {
+            "node": "Upload Video",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Get File Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formulário de Criação": {
+      "main": [
+        [
+          {
+            "node": "Create Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3708e9c3-9e80-45d0-a888-edd9446b907c",
+  "meta": {
+    "instanceId": "f8fb8b7c9f227cabfd3532e55a910625bd5265edfac26d35ea7f1663405904ec"
+  },
+  "id": "7j2wWOXxjDleVqzJ",
+  "tags": []
+}

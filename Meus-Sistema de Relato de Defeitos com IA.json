@@ -1,0 +1,432 @@
+{
+ "id": "defect-reporting-system-ai",
+ "name": "Sistema de Relato de Defeitos com IA",
+ "nodes": [
+  {
+   "id": "webhook-trigger",
+   "name": "Acionador de Formulário de Defeito",
+   "type": "n8n-nodes-base.webhook",
+   "position": [
+    -20,
+    -140
+   ],
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "report-defect",
+    "options": {
+    }
+   },
+   "typeVersion": 1
+  },
+  {
+   "id": "ai-agent-defect-processor",
+   "name": "Agente IA (Processador de Defeitos)",
+   "type": "@n8n/n8n-nodes-langchain.agent",
+   "position": [
+    380,
+    -140
+   ],
+   "parameters": {
+    "text": "Processar o defeito com base nas informações fornecidas.",
+    "options": {
+     "systemMessage": "Você é um sistema inteligente de gerenciamento de defeitos de software. Um usuário relatou um defeito. Sua tarefa é processar este relatório usando as ferramentas disponíveis.\n\nSiga estes passos rigorosamente:\n\n1.  **Verificar Duplicatas:** Use a ferramenta `search_defects_sheet` com o `defect_type` e `defect_description` fornecidos para verificar se o defeito já foi relatado na planilha 'Defeitos'.\n    *   Observe o resultado. Se a ferramenta retornar dados (indicando que o defeito foi encontrado), não faça mais nada e conclua sua tarefa. Retorne uma mensagem clara de que o defeito já é conhecido.\n2.  **Lidar com Novo Defeito:**\n    *   Se a ferramenta `search_defects_sheet` não retornar nenhum dado (indicando que é um defeito novo):\n        *   **Registrar Defeito:** Use a ferramenta `add_defect_to_sheet` com o `defect_type` e `defect_description` para adicionar este novo defeito à planilha 'Defeitos'.\n        *   **Obter Responsável:** Em seguida, use a ferramenta `get_responsible_person_email` com o `defect_type` para obter o nome e o email da pessoa responsável por este tipo de defeito na planilha 'PessoasResponsaveis'.\n        *   **Enviar Notificação:** Finalmente, use a ferramenta `send_email_notification` para enviar um e-mail.\n            *   O `recipient_email` deve ser o email obtido da ferramenta `get_responsible_person_email` (campo 'Email Responsável').\n            *   O `subject` do e-mail deve ser \"Novo Defeito Reportado: {{ $json[\"defectType\"] }}\".\n            *   O `body` do e-mail deve incluir \"Um novo defeito do tipo '{{ $json[\"defectType\"] }}' foi reportado com a seguinte descrição:'{{ $json[\"description\"] }}'Data/Hora do Registro: {{ $now() }}\".\n        *   Retorne uma mensagem clara de que o novo defeito foi registrado e a notificação enviada.\n3.  **Conclusão:** Após executar os passos necessários (ou nenhum, se for duplicado), termine sua operação."
+    },
+    "promptType": "define",
+    "hasOutputParser": false
+   },
+   "typeVersion": 1.9
+  },
+  {
+   "id": "google-generative-ai-chat-model",
+   "name": "Modelo de Chat Gemini (IA Google)",
+   "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGenerativeAi",
+   "position": [
+    380,
+    -300
+   ],
+   "parameters": {
+    "model": {
+     "__rl": true,
+     "mode": "list",
+     "value": "gemini-pro",
+     "cachedResultName": "Gemini Pro"
+    },
+    "options": {
+    }
+   },
+   "credentials": {
+    "googleGenerativeAiApi": {
+     "id": "YOUR_GOOGLE_GENERATIVE_AI_CREDENTIAL_ID",
+     "name": "Credencial Gemini"
+    }
+   },
+   "typeVersion": 1.1
+  },
+  {
+   "id": "tool-google-sheets-search",
+   "name": "Ferramenta Google Sheets (Procurar Defeito)",
+   "type": "@n8n/n8n-nodes-langchain.toolGoogleSheets",
+   "position": [
+    120,
+    0
+   ],
+   "parameters": {
+    "name": "search_defects_sheet",
+    "description": "Busca na planilha 'Defeitos' do Google Sheets por relatórios de defeitos existentes com base no tipo e descrição do defeito. Use isso para determinar se um defeito é novo ou já conhecido. Retorna os dados se encontrados, ou um array vazio se não.",
+    "workflowInputs": {
+     "value": {
+     },
+     "schema": [
+      {
+       "id": "defect_type",
+       "type": "string",
+       "display": true,
+       "required": true,
+       "displayName": "Tipo de Defeito"
+      },
+      {
+       "id": "defect_description",
+       "type": "string",
+       "display": true,
+       "required": true,
+       "displayName": "Descrição do Defeito"
+      }
+     ],
+     "mappingMode": "defineBelow",
+     "matchingColumns": [
+     ],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    },
+    "credentials": {
+     "googleSheetsOAuth2Api": {
+      "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+      "name": "Credencial Google Sheets"
+     }
+    },
+    "documentId": "YOUR_DEFECTS_SHEET_ID",
+    "operation": "get",
+    "sheetName": "Defeitos",
+    "filtersUI": {
+     "values": [
+      {
+       "lookupColumn": "Tipo de Defeito",
+       "lookupValue": "={{ $parameter.defect_type }}"
+      },
+      {
+       "lookupColumn": "Descrição do Defeito",
+       "lookupValue": "={{ $parameter.defect_description }}"
+      }
+     ]
+    },
+    "options": {
+    }
+   },
+   "typeVersion": 1.2
+  },
+  {
+   "id": "tool-google-sheets-add",
+   "name": "Ferramenta Google Sheets (Adicionar Defeito)",
+   "type": "@n8n/n8n-nodes-langchain.toolGoogleSheets",
+   "position": [
+    120,
+    140
+   ],
+   "parameters": {
+    "name": "add_defect_to_sheet",
+    "description": "Adiciona um novo relatório de defeito à planilha 'Defeitos' do Google Sheets, incluindo o timestamp atual. Use somente se `search_defects_sheet` não retornou resultados.",
+    "workflowInputs": {
+     "value": {
+     },
+     "schema": [
+      {
+       "id": "defect_type",
+       "type": "string",
+       "display": true,
+       "required": true,
+       "displayName": "Tipo de Defeito"
+      },
+      {
+       "id": "defect_description",
+       "type": "string",
+       "display": true,
+       "required": true,
+       "displayName": "Descrição do Defeito"
+      }
+     ],
+     "mappingMode": "defineBelow",
+     "matchingColumns": [
+     ],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    },
+    "credentials": {
+     "googleSheetsOAuth2Api": {
+      "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+      "name": "Credencial Google Sheets"
+     }
+    },
+    "documentId": "YOUR_DEFECTS_SHEET_ID",
+    "operation": "append",
+    "sheetName": "Defeitos",
+    "columns": {
+     "value": {
+      "Tipo de Defeito": "={{ $parameter.defect_type }}",
+      "Descrição do Defeito": "={{ $parameter.defect_description }}",
+      "Data/Hora do Registro": "={{ $now() }}"
+     },
+     "schema": [
+      {
+       "id": "Tipo de Defeito",
+       "type": "string",
+       "display": true,
+       "required": false,
+       "displayName": "Tipo de Defeito"
+      },
+      {
+       "id": "Descrição do Defeito",
+       "type": "string",
+       "display": true,
+       "required": false,
+       "displayName": "Descrição do Defeito"
+      },
+      {
+       "id": "Data/Hora do Registro",
+       "type": "string",
+       "display": true,
+       "required": false,
+       "displayName": "Data/Hora do Registro"
+      }
+     ],
+     "mappingMode": "defineBelow",
+     "matchingColumns": [
+     ],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    },
+    "options": {
+    }
+   },
+   "typeVersion": 1.2
+  },
+  {
+   "id": "tool-google-sheets-get-responsible",
+   "name": "Ferramenta Google Sheets (Obter Responsável)",
+   "type": "@n8n/n8n-nodes-langchain.toolGoogleSheets",
+   "position": [
+    120,
+    280
+   ],
+   "parameters": {
+    "name": "get_responsible_person_email",
+    "description": "Recupera o nome e o e-mail da pessoa responsável por um tipo de defeito específico da planilha 'PessoasResponsaveis' do Google Sheets. Retorna os campos 'Nome Responsável' e 'Email Responsável'.",
+    "workflowInputs": {
+     "value": {
+     },
+     "schema": [
+      {
+       "id": "defect_type",
+       "type": "string",
+       "display": true,
+       "required": true,
+       "displayName": "Tipo de Defeito"
+      }
+     ],
+     "mappingMode": "defineBelow",
+     "matchingColumns": [
+     ],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    },
+    "credentials": {
+     "googleSheetsOAuth2Api": {
+      "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+      "name": "Credencial Google Sheets"
+     }
+    },
+    "documentId": "YOUR_RESPONSIBLES_SHEET_ID",
+    "operation": "get",
+    "sheetName": "PessoasResponsaveis",
+    "filtersUI": {
+     "values": [
+      {
+       "lookupColumn": "Tipo de Defeito",
+       "lookupValue": "={{ $parameter.defect_type }}"
+      }
+     ]
+    },
+    "options": {
+    }
+   },
+   "typeVersion": 1.2
+  },
+  {
+   "id": "tool-gmail-send-email",
+   "name": "Ferramenta Gmail (Enviar Email)",
+   "type": "@n8n/n8n-nodes-langchain.toolGmail",
+   "position": [
+    120,
+    420
+   ],
+   "parameters": {
+    "name": "send_email_notification",
+    "description": "Envia uma notificação por e-mail para um destinatário especificado sobre um novo defeito. Requer o e-mail do destinatário, o assunto e o corpo do e-mail.",
+    "workflowInputs": {
+     "value": {
+     },
+     "schema": [
+      {
+       "id": "recipient_email",
+       "type": "string",
+       "display": true,
+       "required": true,
+       "displayName": "Email do Destinatário"
+      },
+      {
+       "id": "subject",
+       "type": "string",
+       "display": true,
+       "required": true,
+       "displayName": "Assunto"
+      },
+      {
+       "id": "body",
+       "type": "string",
+       "display": true,
+       "required": true,
+       "displayName": "Corpo do Email"
+      }
+     ],
+     "mappingMode": "defineBelow",
+     "matchingColumns": [
+     ],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    },
+    "credentials": {
+     "gmailOAuth2Api": {
+      "id": "YOUR_GMAIL_CREDENTIAL_ID",
+      "name": "Credencial Gmail"
+     }
+    },
+    "operation": "send",
+    "toEmail": "={{ $parameter.recipient_email }}",
+    "subject": "={{ $parameter.subject }}",
+    "body": "={{ $parameter.body }}",
+    "options": {
+    }
+   },
+   "typeVersion": 1.1
+  },
+  {
+   "id": "set-response",
+   "name": "Definir Resposta Final",
+   "type": "n8n-nodes-base.set",
+   "position": [
+    600,
+    -140
+   ],
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a901036f-e3c6-4310-8260-84a14138e682",
+       "name": "status_mensagem",
+       "type": "string",
+       "value": "={{ $json.output }}"
+      }
+     ]
+    },
+    "options": {
+    }
+   },
+   "typeVersion": 3.4
+  }
+ ],
+ "connections": {
+  "webhook-trigger": {
+   "main": [
+    [
+     {
+      "node": "ai-agent-defect-processor",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "ai-agent-defect-processor": {
+   "main": [
+    [
+     {
+      "node": "set-response",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "google-generative-ai-chat-model": {
+   "ai_languageModel": [
+    [
+     {
+      "node": "ai-agent-defect-processor",
+      "type": "ai_languageModel",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "tool-google-sheets-search": {
+   "ai_tool": [
+    [
+     {
+      "node": "ai-agent-defect-processor",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "tool-google-sheets-add": {
+   "ai_tool": [
+    [
+     {
+      "node": "ai-agent-defect-processor",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "tool-google-sheets-get-responsible": {
+   "ai_tool": [
+    [
+     {
+      "node": "ai-agent-defect-processor",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "tool-gmail-send-email": {
+   "ai_tool": [
+    [
+     {
+      "node": "ai-agent-defect-processor",
+      "type": "ai_tool",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "meta": {
+  "instanceId": "workflow-instance-id"
+ }
+}

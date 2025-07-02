@@ -1,0 +1,112 @@
+{
+  "name": "AI-Hugging Face - LLM Chain",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## This is an example of basic LLM Chain connected to an open-source model\n### The Chain is connected to the Mistral-7B-Instruct-v0.1 model, but you can change this\n\nPlease note the initial prompt that guides the model:\n```\nYou are a helpful assistant.\nPlease reply politely to the users.\nUse emojis and a text.\nQ: {{ $json.input }}\nA: \n```\n\nThis way the model \"knows\" that it needs to answer the question right after the `A: `.\n\nSince Hugging Face node is this is an inference mode, it does not support LangChain Agents at the moment. Please use [Ollama Chat Model](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.lmchatollama/) node for that",
+        "height": 357,
+        "width": 1083
+      },
+      "id": "9b476c9b-26f5-4321-a844-2faaf57f3644",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        20,
+        -20
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a1327fba-d0fc-4b72-8236-53dd1b463ec0",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        300,
+        400
+      ],
+      "webhookId": "bf2e38b8-566a-4aeb-8efe-28240f4a6991",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a helpful assistant. Please reply politely to the users. Use emojis and a text."
+            }
+          ]
+        }
+      },
+      "id": "e31bc953-c453-43aa-9a10-c0d4d48a69c7",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        520,
+        400
+      ],
+      "typeVersion": 1.5
+    },
+    {
+      "parameters": {
+        "model": "mistralai/Mistral-7B-Instruct-v0.1",
+        "options": {
+          "frequencyPenalty": 2,
+          "maxTokens": 512,
+          "temperature": 0.8
+        }
+      },
+      "id": "a8d1d1ca-cef3-4d98-9447-b1c3a884d0f9",
+      "name": "Hugging Face Inference Model",
+      "type": "@n8n/n8n-nodes-langchain.lmOpenHuggingFaceInference",
+      "position": [
+        420,
+        600
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "iCB5SwdHjqYgy7hQ",
+          "name": "HuggingFaceApi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hugging Face Inference Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0c19b559-bedb-4b66-8dd8-2826ec54ea15",
+  "meta": {
+    "instanceId": "f8fb8b7c9f227cabfd3532e55a910625bd5265edfac26d35ea7f1663405904ec"
+  },
+  "id": "lLIDa7Qh72D0IGZ3",
+  "tags": []
+}

@@ -1,0 +1,143 @@
+{
+  "name": "AI-Conversational Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "lead-form-carros",
+        "options": {}
+      },
+      "id": "1233d4b7-9790-427b-8adb-d7f6d93bcbf3",
+      "name": "Webhook Form",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        -40
+      ],
+      "webhookId": "40804b53-e6be-4b5d-b0ab-f023040a3132"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "nome",
+              "value": "={{$json[\"nome\"]}}"
+            },
+            {
+              "name": "email",
+              "value": "={{$json[\"email\"]}}"
+            },
+            {
+              "name": "telegram",
+              "value": "={{$json[\"telegram\"]}}"
+            },
+            {
+              "name": "carro_interesse",
+              "value": "={{$json[\"carro_interesse\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "def97f48-1fcf-47fe-89b5-91196c793604",
+      "name": "Formatar Dados",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "text": "={{`Você está simulando uma ligação para o lead ${$json[\"nome\"]}, interessado no carro: ${$json[\"carro_interesse\"]}. Seja educado, explique os diferenciais e pergunte se deseja agendar um test-drive.`}",
+        "options": {}
+      },
+      "id": "c6154282-4987-4a94-a90a-ebe4056bfd2a",
+      "name": "IA Agente",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "subject": "Informações sobre o carro que você se interessou",
+        "additionalFields": {}
+      },
+      "id": "06161295-cf50-493e-b284-9bd4129b113c",
+      "name": "Enviar Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{$json[\"telegram\"]}}",
+        "text": "={{`Oi ${$json[\"nome\"]}, recebemos seu interesse pelo carro ${$json[\"carro_interesse\"]}. Em breve entraremos em contato para marcar um test-drive!`}}",
+        "additionalFields": {}
+      },
+      "id": "8da0e4b7-c049-425e-9b60-241ae7f18880",
+      "name": "Enviar Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        580,
+        -40
+      ],
+      "webhookId": "16e4e25c-b44d-4f5b-8e1d-355df493d5a4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Form": {
+      "main": [
+        [
+          {
+            "node": "Formatar Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Dados": {
+      "main": [
+        [
+          {
+            "node": "IA Agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA Agente": {
+      "main": [
+        [
+          {
+            "node": "Enviar Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "97560e92-bc26-4049-9114-6e93a08c3b8d",
+  "meta": {
+    "instanceId": "f8fb8b7c9f227cabfd3532e55a910625bd5265edfac26d35ea7f1663405904ec"
+  },
+  "id": "QOiomfkYoahPN7QD",
+  "tags": []
+}

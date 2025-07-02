@@ -1,0 +1,432 @@
+{
+  "name": "AI-Ask PDF using AI",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "### Carrega os dados no banco de dados\nBusca o arquivo do Google Drive, divide em partes e insere no índice Pinecone",
+        "height": 627,
+        "width": 918,
+        "color": 7
+      },
+      "id": "baf49544-348b-4751-b58e-0c419d339fd0",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -20,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### Bate-papo com o banco de dados\nIncorpora a mensagem do bate-papo recebida e usa-a para recuperar blocos relevantes do repositório de vetores. Estes são passados ​​ao modelo para formular uma resposta.",
+        "height": 647,
+        "width": 714,
+        "color": 7
+      },
+      "id": "87a41478-15f0-40c5-a588-06b53d923ae4",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1160,
+        -20
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Experimente!\n1. No Pinecone, crie um índice com 768 dimensões e selecione-o em *ambos* os nós do Pinecone.\n2. Clique em *Execute workflow* na parte inferior da tela para carregar os dados no repositório de vetores.\n3. Clique em *Open chat* na parte inferior da tela para fazer perguntas sobre os dados.",
+        "height": 265,
+        "width": 300
+      },
+      "id": "6f34696e-5cdf-4290-aabf-96f78d62eb38",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -360,
+        280
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {},
+      "id": "7f0defa7-fc08-4164-b140-35b623d46174",
+      "name": "When clicking 'Test Workflow' button",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -260,
+        100
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "test-index",
+          "mode": "list",
+          "cachedResultName": "test-index"
+        },
+        "options": {
+          "clearNamespace": true
+        }
+      },
+      "id": "b570fd01-b59b-4176-8f36-80f3af5e649a",
+      "name": "Pinecone Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "position": [
+        520,
+        100
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "pineconeApi": {
+          "id": "gbtSYaxVBAlP2P5F",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "dbcf8879-172c-4a2e-b94d-494efd7a7848",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        1000,
+        100
+      ],
+      "webhookId": "dec328cc-f47e-4727-b1c5-7370be86a958",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Use Pinecone Vector Store1"
+        }
+      },
+      "id": "8bd18c5a-43d6-4a15-9994-dde87d0fa389",
+      "name": "Question & Answer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1320,
+        100
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d08ef1f5-932b-4bbb-bb02-0cbdff26a636",
+              "name": "file_url",
+              "type": "string",
+              "value": "https://drive.google.com/file/d/1rN0Cpk37fYk2GPhjQ_5qLOpFd-P8iIN7d-Nam5Ild8w/view"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "01582a02-b59d-4b04-b4b1-1919e78fd00e",
+      "name": "Set Google Drive file URL",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        60,
+        100
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $json.file_url }}"
+        },
+        "options": {}
+      },
+      "id": "e4c82207-384e-4579-ab97-a632eb9a9f70",
+      "name": "Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        240,
+        100
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "46BfIZqyMmFGOFfp",
+          "name": "Autenticação na API do Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "id": "aa55371d-4a4a-41dc-be67-8beb51c9d2bc",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        620,
+        300
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chunkSize": 3000,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "58943b00-f591-439c-8148-4ae16614fc5d",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "position": [
+        700,
+        440
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "bitcoin_paper",
+        "toolDescription": "Chame esta ferramenta para recuperar fatos do whitepaper do bitcoin",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "test-index",
+          "mode": "list",
+          "cachedResultName": "test-index"
+        },
+        "includeDocumentMetadata": false,
+        "options": {}
+      },
+      "id": "0b34f2d4-c95f-475b-b141-aafd607a1637",
+      "name": "Pinecone Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "position": [
+        1540,
+        320
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "pineconeApi": {
+          "id": "gbtSYaxVBAlP2P5F",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ],
+      "id": "e063bf2a-2676-47e0-a22b-57f3f8407847",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EVqxTZ0KYqoDbpl9",
+          "name": "Autenticação na API do Google Gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        320
+      ],
+      "id": "eb3ac3e2-faf9-4f0b-8d36-023a1b18ed26",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EVqxTZ0KYqoDbpl9",
+          "name": "Autenticação na API do Google Gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        480
+      ],
+      "id": "be71a1bb-10af-4644-b60a-89d105199768",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EVqxTZ0KYqoDbpl9",
+          "name": "Autenticação na API do Google Gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1380,
+        320
+      ],
+      "id": "28af907f-d058-4e84-b07d-4b8b0abf4ab6",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Question & Answer",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Google Drive file URL": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Question & Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Test Workflow' button": {
+      "main": [
+        [
+          {
+            "node": "Set Google Drive file URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Question & Answer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "63e63b67-0bbb-4c0f-b7b2-141e249648a0",
+  "meta": {
+    "instanceId": "f8fb8b7c9f227cabfd3532e55a910625bd5265edfac26d35ea7f1663405904ec"
+  },
+  "id": "fGnjOgZZ4nmuU4Xd",
+  "tags": [
+    {
+      "createdAt": "2025-07-01T14:39:55.423Z",
+      "updatedAt": "2025-07-01T14:39:55.423Z",
+      "id": "WlBYEwTUSj66whkh",
+      "name": "Pinecone"
+    }
+  ]
+}

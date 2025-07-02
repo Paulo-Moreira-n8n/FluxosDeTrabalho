@@ -1,0 +1,584 @@
+{
+  "name": "AI-Graphic Telegram Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Agente de Chatbot de IA com Especialistas\n\n### Usa os gráficos de conhecimento do InfraNodus e o Graph RAG para recuperar informações relevantes.\n\nUse o [gráfico do InfraNodus](https://infranodus.com) como base de conhecimento para o chatbot de IA.\n\nCarregue quaisquer dados para o InfraNodus, gere gráficos de conhecimento separados e conecte-os como ferramentas para o agente IA, para que ele possa decidir qual \"Especialista\" usar. O Graph RAG da InfraNodus fornecerá respostas de alta qualidade que ampliarão as respostas do chatbot.\n\nDemonstração em vídeo: [https://www.youtube.com/watch?v=kS0QTUvcH6E](https://www.youtube.com/watch?v=kS0QTUvcH6E)\n\nDescrição detalhada: [Portal de suporte do Nodus Labs](https://support.noduslabs.com/hc/en-us/articles/20174217658396-Using-InfraNodus-Knowledge-Graphs-as-Experts-for-AI-Chatbot-Agents-in-n8n)\n\nA chave da API do InfraNodus pode ser obtida em [InfraNodus.Com](https://infranodus.com/use-case/ai-knowledge-graphs)\n\n\n[![Vídeo tutorial](https://img.youtube.com/vi/kS0QTUvcH6E/sddefault.jpg)](https://www.youtube.com/watch?v=kS0QTUvcH6E)",
+        "height": 820,
+        "width": 540,
+        "color": 6
+      },
+      "id": "a3a1194f-fa29-4acb-909b-33e0ce192ec4",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -620,
+        520
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n## Memória do Chat\n\nUsamos o nó Memória Simples para rastrear o contexto da conversa para que o usuário possa consultar mensagens anteriores enquanto conversa com o modelo.",
+        "height": 740,
+        "width": 200
+      },
+      "id": "832bba73-ad0e-4647-94a4-fab6aa6aef89",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        800,
+        1040
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 3. Workflow do Agent IA\n\nEscolhe qual ferramenta (especialista) usar, dependendo da mensagem do usuário. Em seguida, recebe as respostas e sintetiza o resultado final.\n\nCertifique-se de descrever bem as ferramentas disponíveis tanto no Prompt do Sistema do Agente quanto nas descrições das ferramentas.",
+        "height": 440,
+        "width": 460
+      },
+      "id": "854719dd-0983-4a66-9b55-430798d04763",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        700,
+        520
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 1. Trigger do Telegram\n\nA conversa será iniciada quando você enviar uma mensagem para o seu bot do Telegram. Para configurar um bot, basta enviar uma mensagem `/newbot` para `@botfather` no Telegram. Leva 30 segundos.",
+        "height": 440,
+        "width": 300
+      },
+      "id": "b99eca1c-6cfe-40d1-bb18-da264c0b9a1d",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -20,
+        520
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Receive a Message on Telegram').item.json.message.chat.id }}"
+      },
+      "id": "c88f3ed8-742c-47df-9ace-afce80a1b2c8",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        860,
+        1080
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "content": "## 2. Fornecer Feedback ao Usuário\nEste nó informa ao usuário de que o agente está funcionando.",
+        "height": 440,
+        "width": 300
+      },
+      "id": "a0ec5fe7-d075-4f82-8afe-c021eb9f5d7f",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        340,
+        520
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "d660fa1a-a9fb-4c3c-8933-7e8adabcea51",
+      "name": "Receive a Message on Telegram",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "position": [
+        80,
+        740
+      ],
+      "webhookId": "aa8d195c-01c2-435b-9d88-87b38306a6a6",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "Njv2DyPU6u5F8UcP",
+          "name": "Autenticação na API do Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendChatAction",
+        "chatId": "={{ $json.message.chat.id }}"
+      },
+      "id": "ffe57259-0029-43b8-b103-c6fc77d766b4",
+      "name": "Send \"Typing...\" message to User",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        440,
+        740
+      ],
+      "webhookId": "845f29dd-9da3-4ac9-86d1-22280acbb46a",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "Njv2DyPU6u5F8UcP",
+          "name": "Autenticação na API do Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 4. Responder ao Usuário\n\nDepois que a resposta é gerada, retorn ela para o chat do usuário no Telegram.",
+        "height": 440,
+        "width": 300
+      },
+      "id": "290c1a8d-b37d-411c-a624-2fba7bfcf137",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1220,
+        520
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Receive a Message on Telegram').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "8ce15d63-c0b2-4776-bb8b-a3998caa6bc6",
+      "name": "Send Telegram Message to User",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        1320,
+        740
+      ],
+      "webhookId": "a6b9e331-2b1a-4056-a9fc-5d10b7196c54",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "Njv2DyPU6u5F8UcP",
+          "name": "Autenticação na API do Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Receive a Message on Telegram').item.json.message.text }}",
+        "options": {
+          "systemMessage": "Você está bem familiarizado com os livros de Dmitry Paranyushkin por meio das ferramentas às quais tem acesso. Ao receber a consulta de um usuário, você pode modificá-la para se adequar melhor ao contexto de cada ferramenta. Sempre acesse pelo menos uma das ferramentas e envie uma resposta ampliada.\nAo gerar uma resposta, tente combinar as perspectivas onde elas se encaixam e aponte as discrepâncias quando houverem."
+        }
+      },
+      "id": "42976077-9f80-4763-95f5-c884c5a24829",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        820,
+        740
+      ],
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "toolDescription": "Faça uma solicitação ao livro The Waves into Patterns, que aborda com profundidade as questões de ciclos naturais, variabilidade, estados fractais, dinâmica e estabilidade fora do equilíbrio. Incluindo os seguintes tópicos:\n\n<MainTopics>:\n1. Influência do Sistema: influência de escala múltipla\n2. Dinâmica de Padrões: variabilidade de padrões fractais\n3. Equilíbrio de Mudança: tempo de onda dinâmico\n4. Transformação do Centro: ciclo central dominante\n5. Estágios de Crescimento: período de exploração do crescimento\n6. Estratégia de Longo Prazo: estado de longo prazo\n7. Relações Sazonais: lua verão natural\n8. Conexão de Fluxo: existir quebrando exploração\n</MainTopics>",
+        "method": "POST",
+        "url": "https://infranodus.com/api/v1/graphAndAdvice?doNotSave=true&addStats=true&optimize=develop&includeGraph=false&includeGraphSummary=true&includeStatements=true",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "special_agents_manual"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `User's request adjusted to suit this context`, 'string') }}"
+            },
+            {
+              "name": "requestMode",
+              "value": "response"
+            },
+            {
+              "name": "aiTopics",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dabf52e5-155d-465c-b825-509cfb76ad97",
+      "name": "Waves into Patterns Book Expert",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "position": [
+        1320,
+        1080
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Op9VfdEBQVf7CPgF",
+          "name": "Autenticação no Serviço do Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Faça uma solicitação para o livro Manual do Agente Especial, que é bem versado nas questões de agência humana, especialidade, dinâmica de infiltração e tensão, estratégias, identidades, encontrando o especial em você, bem como os seguintes tópicos:\n\n<MainTopics>:\n1. Ativação do Agente: ativação especial do agente\n2. Dinâmica do Sistema: funcionamento do corpo do sistema\n3. Fluxo de Ordem: ordem do tempo de ação\n4. Processo Criativo: criar entidade de identidade\n5. Padrões de Movimento: respiração da onda de movimento\n6. Impacto de Entrada: impacto do impulso de entrada\n7. Empreendimento de Ficção: alto risco na ficção\n8. Estrutura Social: nível de possibilidade predefinido\n</MainTopics>",
+        "method": "POST",
+        "url": "https://infranodus.com/api/v1/graphAndAdvice?doNotSave=true&addStats=true&optimize=develop&includeGraph=false&includeGraphSummary=true&includeStatements=true",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "special_agents_manual"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `User's request adjusted to suit this context`, 'string') }}"
+            },
+            {
+              "name": "requestMode",
+              "value": "response"
+            },
+            {
+              "name": "aiTopics",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d779ebcb-2856-4ea1-96ca-3f141f358b4f",
+      "name": "Special Agent's Manual Book Expert",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "position": [
+        1080,
+        1080
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Op9VfdEBQVf7CPgF",
+          "name": "Autenticação no Serviço do Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "O livro O Fluxo e a Noção, que aborda com profundidade as questões de criar com alguém, sonhar, criar novas formas, dissipar ideias, arte e vida. Inclui os seguintes tópicos:\n\n<MainTopics>:\n1. Dinâmica da Forma: contorno da forma concêntrico\n2. Alinhamento do Tempo: tempo de prática longo\n3. Jornada do Homem: vela do homem-arco\n4. Fluxo da Noção: fluxo de imagem paranyushkin\n5. Realização da Essência: essência do processo essencial\n6. Escolhas de Vida: traço da coisa escrava\n7. Padrões de Onda: movimento da luz encontrada\n8. Mediação da Sincronia: palavra circadiana do livro\n9. Visão Completa: mediação da sincronia múltipla\n10. Guia de Instruções: prefácio completo da instrução</MainTopics>",
+        "method": "POST",
+        "url": "https://infranodus.com/api/v1/graphAndAdvice?doNotSave=true&addStats=true&optimize=develop&includeGraph=false&includeGraphSummary=true&includeStatements=true",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "the_flow_and_notion"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `User's request adjusted to suit this context`, 'string') }}"
+            },
+            {
+              "name": "requestMode",
+              "value": "response"
+            },
+            {
+              "name": "aiTopics",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8df1da7d-a033-4365-bc7a-26abbfe51e61",
+      "name": "The Flow and the Notion Book",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "position": [
+        1560,
+        1080
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Op9VfdEBQVf7CPgF",
+          "name": "Autenticação no Serviço do Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "O livro Polysingularity Letters, que aborda com profundidade as questões de polisingularidade, multiplicidade, redes, networking, arte e abordagem criativa. E também estes tópicos:\n\n<MainTopics>:\n1. Dinâmica Comunitária: comunidade em rede conectada\n2. Equilíbrio Global: estado de mudança global\n3. Prática Polisingular: pensamento polisingular existente\n4. Relações Temporais: tempo, momento, coisa\n5. Fonte da Consciência: visão da cognição social\n6. Criação de Significado: criar significado ortodoxo\n7. Conexões de Dmitry: post dmitry minute\n8. Variações Linguísticas: wa ë ww\n</MainTopics>",
+        "method": "POST",
+        "url": "https://infranodus.com/api/v1/graphAndAdvice?doNotSave=true&addStats=true&optimize=develop&includeGraph=false&includeGraphSummary=true&includeStatements=true",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "polysingularity_letters"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `User's request adjusted to suit this context`, 'string') }}"
+            },
+            {
+              "name": "requestMode",
+              "value": "response"
+            },
+            {
+              "name": "aiTopics",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a5553623-bb80-4589-8654-b1d791081a9b",
+      "name": "The Polysingularity Letters Book",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "position": [
+        1800,
+        1080
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Op9VfdEBQVf7CPgF",
+          "name": "Autenticação no Serviço do Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Configurando um Bot do Telegram \n### A configuração de um bot do Telegram leva apenas 30 segundos. Após a configuração, crie uma credencial do Telegram com seu token de acesso e use-a em todos os nós do Telegram acima.\n1. Crie um novo chat no Telegram com o usuário [@botfather](https://t.me/botfather) em [https://t.me/botfather](https://t.me/botfather).\n2. Digite `/newbot`\n3. Dê um nome (que não seja o nome de usuário)\n4. Dê um nome de usuário (ex: @my_new_bot)\n5. Você receberá um **token de API**. Copie esse token e use-o para configurar as credenciais do Telegram para os nós do Telegram acima.\n\nCONFIGURAÇÕES OPCIONAIS PARA USO EM GRUPOS DO TELEGRAM:\n6. Observe que, se você quiser adicionar seus bots do Telegram a grupos, precisará conceder a eles permissões para acessar e ler mensagens de grupos. Para isso, digite `/mybots`, liste seus bots e escolha o bot que você criou.\n7. Em seguida, clique em Configurações do Bot > Permitir Grupos > Sim (o bot poderá participar de grupos).\n8. Em seguida, escolha Configurações > Privacidade do Grupo > Desativar (para permitir que o bot leia as mensagens dos grupos).\n9. Observe que seus bots não poderão responder uns aos outros (essa é uma limitação do Telegram para evitar spam e loops infinitos), mas poderão participar das conversas do seu grupo. Nesse caso, talvez você queira configurar um filtro adicional no Workflow acima, onde o bot só responderá se for abordado diretamente usando seu nome de usuário (para que ele não responda a todas as mensagens do grupo, mas apenas quando perguntado diretamente).",
+        "height": 720,
+        "width": 600,
+        "color": 3
+      },
+      "id": "790877ba-dda4-4a93-9b39-1eb05b903112",
+      "name": "Sticky Note10",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -20,
+        1060
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n## Especialista nº 1\nAdicione seu gráfico do InfraNodus aqui por meio do nó HTTP usando o nome dele no campo `body.name`.\nDescreva o que o especialista faz na descrição da ferramenta. Você pode usar o resumo do Graph RAG gerado automaticamente em InfraNodus > Gráfico > Notas do Projeto\n![Captura de tela do livro](https://i.ibb.co/rfxsJ4MV/circadian-special-agents-manual.png)",
+        "height": 740,
+        "width": 220
+      },
+      "id": "669eed4f-cbca-490c-be8a-20fbee7dd8ca",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1020,
+        1040
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n## Especialista nº 2\nAdicione seu gráfico do InfraNodus aqui por meio do nó HTTP usando o nome dele no campo `body.name`.\nDescreva o que o especialista faz na descrição da ferramenta. Você pode usar o resumo do Graph RAG gerado automaticamente em InfraNodus > Gráfico > Notas do Projeto\n![ondas na tela de padrões](https://i.ibb.co/1tDJSgVq/circadian-waves-into-patterns.png)",
+        "height": 740,
+        "width": 220
+      },
+      "id": "de290b85-8e06-4cc7-bd6f-be9bb81a5418",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1260,
+        1040
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n## Especialista nº 3\nVocê pode adicionar mais especialistas aqui. Basta dar nomes descritivos para que o agente saiba a qual se conectar quando tiver uma dúvida.\n\n\n\n\n\n\n![imagem de fluxo e noção](https://i.ibb.co/prLbFG0w/circadian-the-flow-and-notion.png)",
+        "height": 740,
+        "width": 220
+      },
+      "id": "9b6095f7-0388-4fc5-8d57-4c6c2a39589e",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1500,
+        1040
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n## Especialista nº 4\nVocê pode adicionar mais especialistas aqui. Basta dar nomes descritivos para que o agente saiba a qual deles se conectar quando tiver uma dúvida.\n\n\n\n\n\n\n![gráfico infranodus](https://i.ibb.co/hRqxn8JN/circadian-conversation-book.png)",
+        "height": 740,
+        "width": 220
+      },
+      "id": "ef682fa8-3cf0-49ae-bd50-4cf301250283",
+      "name": "Sticky Note9",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1740,
+        1040
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        660,
+        1080
+      ],
+      "id": "35e3f16e-550c-49f9-8b45-a80ff13d7155",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EVqxTZ0KYqoDbpl9",
+          "name": "Autenticação na API do Google Gemini"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message to User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "The Flow and the Notion Book": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive a Message on Telegram": {
+      "main": [
+        [
+          {
+            "node": "Send \"Typing...\" message to User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Waves into Patterns Book Expert": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send \"Typing...\" message to User": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "The Polysingularity Letters Book": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Special Agent's Manual Book Expert": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "93c69fee-9c8d-4b3a-9875-039e9f5a6549",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f8fb8b7c9f227cabfd3532e55a910625bd5265edfac26d35ea7f1663405904ec"
+  },
+  "id": "cmh6mNgztxkDX54t",
+  "tags": []
+}

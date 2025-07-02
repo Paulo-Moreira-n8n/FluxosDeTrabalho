@@ -1,0 +1,395 @@
+{
+  "name": "Engineering-AI Prompt Maker",
+  "nodes": [
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "17addc4e-8db0-4b3e-b931-cb1da0a301a0",
+      "name": "Gemini 2.5 Flash",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        1580,
+        940
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EVqxTZ0KYqoDbpl9",
+          "name": "Autenticação na API do Google Gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Visão Geral do Workflow\nEste Workflow n8n fornece uma interface web amigável para gerar prompts estruturados para Grandes Modelos de Linguagem (LLMs) usando o Google Gemini. Os usuários podem descrever o prompt desejado, especificar quais seções desejam incluir (Instruções do Sistema, Exemplos, Entradas), e o Workflow utilizará IA para criar um prompt bem formatado. O prompt gerado é então exibido em uma página web dedicada, pronto para ser copiado.\n\n## Como Funciona\nEste modelo fornece uma aplicação web completa e pronta para uso para gerar prompts de IA de alta qualidade. Ele apresenta um formulário web amigável onde você pode descrever seu objetivo e utiliza um modelo de IA (Google Gemini) para criar um prompt estruturado e reutilizável.\n\n1. Frontend (O Formulário):\n   - Um nó de Gatilho de Formulário cria um formulário web atraente e público. Aqui, um usuário descreve o prompt que precisa e seleciona quais componentes estruturais incluir (como instruções do sistema, exemplos ou variáveis de entrada).\n2. Backend (A Lógica da IA):\n   - Um nó de Cadeia LangChain recebe a solicitação do usuário e constrói um meta-prompt — um conjunto de instruções para a IA sobre como gerar o prompt final.\n   - O nó do Google Gemini executa esse meta-prompt, criando uma saída bem estruturada com seções e tags claras.\n3. O Resultado (A Página Web):\n   - Após a geração, o usuário é redirecionado automaticamente para uma nova URL.\n   - Esta URL é gerenciada por outro nó Webhook, que serve uma página HTML com código personalizado.\n   - Esta bela página web com tema escuro exibe o prompt gerado e inclui um botão Copiar com um clique, facilitando o uso imediato do resultado.\n  \nEste Workflow é uma aplicação full-stack construída inteiramente dentro do n8n, é um exemplo perfeito de como criar ferramentas web interativas com o n8n, combinando uma interface de usuário, lógica de backend e uma resposta web dinâmica em um único Workflow.\n\n## Etapas de configuração\nTempo de configuração: ~1-3 minutos\n\n1. Configurar as Credenciais do Google AI:\n   Este Workflow usa um modelo do Google Gemini. Você precisará de uma chave de API do Google AI.\n   - No n8n, acesse Credenciais e clique em Adicionar credencial.\n   - Procure por Google Gemini e insira sua chave de API.\n   - Volte ao Workflow, abra o nó Gemini 2.5 Flash e selecione sua credencial recém-criada no menu suspenso.\n2. Ative o Workflow:\n   - Clique no botão Inactive no canto superior direito para ativar o Workflow.\n3. Acesse o Criador de Prompt:\n   - Abra o nó Prompt Request (Form Trigger).\n   - Copie a URL pública fornecida. Este é o link para sua nova aplicação web!\n   - Abra o link no seu navegador, preencha o formulário e veja a mágica acontecer.\n \nObservação: Este Workflow usa variáveis de ambiente como {{ $env.WEBHOOK_URL }} para criar a URL de redirecionamento. Elas normalmente são definidas automaticamente pelo n8n e devem funcionar imediatamente na maioria das configurações padrão do n8n.",
+        "height": 1200,
+        "width": 760,
+        "color": 6
+      },
+      "id": "bc0b614e-6a6c-4525-9548-6ee794ce61eb",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -800,
+        180
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### 1. Solicitação de Prompt (gatilho de formulário)\n* **Objetivo:** Servir como ponto de entrada para o Workflow. Apresenta um formulário web personalizável para coletar requisitos do usuário para o Prompt de IA.\n* **Configuração:**\n   * **Título do formulário:** Criador de Prompts de IA\n   * **Descrição do formulário:** Deixe a IA criar seu Prompt perfeito..\n   * **Campos do formulário:**\n   Qual Prompt você deseja?: Uma área de texto obrigatória para o usuário descrever o objetivo, o contexto, o formato de entrada e os exemplos do Prompt.\n   Selecionar Seções: Um menu suspenso de seleção múltipla que permite ao usuário escolher se deseja incluir as seções Instruções do Sistema, Exemplos e Entradas no Prompt gerado.\n * **Caminho do Webhook:** /prompt-maker\n * **CSS personalizado:** Inclui CSS abrangente para estilizar o formulário para uma aparência moderna e coerente com a página web.\n* **Lógica:** Após o envio do formulário, ele captura a entrada do usuário e a passa para o próximo nó para geração de prompt.",
+        "height": 600,
+        "width": 500,
+        "color": 7
+      },
+      "id": "85b550bd-7eaa-40e2-b49a-fc3243f63471",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        800,
+        40
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### 2. Geração do Prompt (Cadeia LLM)\n* **Objetivo:** Este nó atua como orquestrador para a geração de prompts. Ele constrói um meta-prompt com base nas seleções do usuário e o envia para o LLM conectado.\n* **Configuração:**\n * **Texto:** Utiliza a entrada do usuário no campo Qual prompt você deseja?.\n * **Mensagens:** Contém uma mensagem do sistema que instrui o LLM (Gemini) a atuar como um gerador especialista de prompts. Esta mensagem inclui dinamicamente marcadores de posição para <papel>, <exemplos> e <entradas> com base nas escolhas do usuário em Selecionar Seções. A estrutura principal inclui <objetivo>, <contexto> e <formato_de_saída>.\n* **Lógica:** Ele cria dinamicamente o prompt para o LLM, garantindo que a saída gerada esteja de acordo com um formato específico e estruturado (por exemplo, usando tags semelhantes a XML para seções).",
+        "height": 500,
+        "width": 620,
+        "color": 7
+      },
+      "id": "b4337e45-619e-4933-b58f-91932a3ef1af",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1320,
+        140
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### 3. Gemini 2.5 Flash (Google Gemini Chat)\n* **Objetivo:** Este é o Large Language Model (LLM) que realiza a geração real do prompt.\n* **Configuração:**\n   * **Nome do modelo:** models/gemini-2.5-flash (um modelo rápido e econômico, mas inteligente o suficiente para criar Prompts).\n   * **Temperatura:** `0` (garante uma saída determinística e consistente, ideal para geração estruturada).\n* **Lógica:** Recebe o meta-prompt de Geração do Prompt e retorna o Prompt de IA estruturado recém-criado.",
+        "height": 380,
+        "width": 500,
+        "color": 7
+      },
+      "id": "3ba67d6a-fe30-44ac-b158-dff3e0fe6763",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1380,
+        680
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### 4. Ir para o Site (Formulário)\n* **Objetivo:** Após a geração do Prompt, este nó redireciona o navegador do usuário para uma nova URL, onde o Prompt gerado será exibido.\n* **Configuração:**\n   * **Responder com:** redirect\n   * **URL de redirecionamento:** Construído dinamicamente usando variáveis de ambiente n8n (`WEBHOOK_URL`, `N8N_ENDPOINT_WEBHOOK`) e o Prompt gerado codificado por URL (`$json.text.urlEncode()`). Este URL aponta para o Webhook Obter página Web do Prompt.\n* **Lógica:** Garante uma transição perfeita do envio do formulário para a página de exibição do Prompt.\n",
+        "height": 500,
+        "width": 480,
+        "color": 7
+      },
+      "id": "db2bc73b-c351-4055-be7a-4299be1f4b4c",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1960,
+        140
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### 5. Obter Página da Web do Prompt (Webhook)\n* **Objetivo:** Este webhook serve o destino do redirecionamento de Ir para o site. Ele recebe o Prompt gerado como um parâmetro de consulta de URL.\n* **Configuração:**\n   * **Caminho:** `/prompt/result`\n   * **Modo de resposta:** `Usando Responder ao nó do Webhook` (delega a geração da resposta para o próximo nó).\n* **Lógica:** Escuta as solicitações recebidas no caminho `/prompt/result` e extrai o parâmetro de consulta Prompt.",
+        "height": 420,
+        "width": 520,
+        "color": 7
+      },
+      "id": "74160321-fe0d-4c82-92cd-157082d06b4b",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        800,
+        1240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### 6. Exibir Página Web (Responder ao Webhook)\n**Objetivo:** Renderiza uma página HTML personalizada para exibir de forma atraente o Prompt gerado e fornecer uma funcionalidade para copiá-lo para a área de transferência.\n* **Configuração:**\n   * **Responder com:** text\n   * **Corpo da resposta:** Contém um documento HTML completo com CSS incorporado para estilização e JavaScript para a funcionalidade de cópia e a manipulação da exibição do Prompt.\n * **Cabeçalho do tipo de conteúdo:** `text/html; charset=UTF-8`\n* **Lógica:**\n  * A página HTML foi projetada com um tema escuro e um bloco de código (<pre><code>) para apresentar o Prompt.\n   * Um trecho de JavaScript incorpora com segurança o Prompt recebido (de $json.query.prompt) em uma variável usando JSON.stringify() para manipular caracteres especiais.\n   * Outro trecho de JavaScript preenche o bloco <code> com o Prompt usando `textContent` (para exibi-lo literalmente, incluindo colchetes angulares) e implementa o recurso de copiar para a área de transferência.",
+        "height": 560,
+        "width": 600,
+        "color": 7
+      },
+      "id": "a503bd74-718e-4446-9647-bf71bc4f96a5",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1340,
+        1100
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Credenciais Necessárias\n**API do Google Palm:** Este Workflow requer uma credencial n8n para que a API do Google Palm (que suporta modelos Gemini) se conecte ao serviço Google Gemini. O nome da credencial de exemplo é IA2S.\n\n## Configuração\n1. **Importar o Workflow:**\n   * Criar um arquivo com a cópia do JSON do Workflow fornecido.\n   * Na sua instância do n8n, acesse Workflows e clique em Novo.\n   * Clique na opção Import from File... e selecione o arquivo.\n2. **Configurar a credencial da API do Google Palm:**\n   * Certifique-se de ter uma credencial ativa da API do Google Gemini configurada no n8n.\n   * Caso contrário, abra o nó Gemini 2.5 Flash, clique em Nova credencial e siga as instruções para configurá-la (você precisará de uma chave de API do Google AI Studio).\n3. **Variáveis de Ambiente (Opcional, mas Recomendadas):**\n   * Este Workflow usa as variáveis de ambiente WEBHOOK_URL e N8N_ENDPOINT_WEBHOOK para construir a URL de redirecionamento. Elas estarão em vermelho, mas isso é normal.\n   * WEBHOOK_URL: Geralmente, é definido automaticamente pelo n8n como a URL base da sua instância.\n   * N8N_ENDPOINT_WEBHOOK: Se a sua instância n8n estiver atrás de um proxy reverso ou tiver um caminho de webhook personalizado (por exemplo, https://seudominio.com/caminho-personalizado), talvez seja necessário definir esta variável de ambiente na configuração do n8n. Por padrão, o caminho do webhook do n8n é webhook.\n4. **Ative o Workflow:**\n   * Após importar e configurar as credenciais, ative o Workflow alternando a chave Active no canto superior direito do editor de Workflow (para tornar o Webhook acessível).",
+        "height": 580,
+        "width": 760,
+        "color": 5
+      },
+      "id": "5fee3b88-2499-4d87-a1e5-49dab0acf812",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        180
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Uso\n1. **Acesse o Formulário do Criador de Prompt:**\n   * Assim que o fluxo de trabalho estiver ativo, clique no nó Solicitação de Prompt.\n   * Copie a URL Pública exibida nas configurações do nó (por exemplo, https://SUA_URL_N8N/formulário/criador-de-prompt).\n   * Abra esta URL no seu navegador.\n2. **Preencha o Formulário:**\n   * Insira uma descrição detalhada do prompt que deseja criar na área de texto **Qual prompt você deseja?**.\n   * Selecione as seções desejadas (Instruções do Sistema, Exemplos, Entradas) usando as opções **Selecionar Seções**.\n3. **Gerar e Visualizar Prompt:**\n   * Clique no botão **Criar Prompt**.\n   * O fluxo de trabalho será executado, gerará o Prompt e redirecionará seu navegador para uma nova página exibindo o Prompt gerado.\n4. **Copiar o Prompt:**\n   * Na página de exibição do Prompt, clique no botão **Copiar** para copiar todo o Prompt gerado para sua área de transferência.",
+        "height": 440,
+        "width": 760,
+        "color": 4
+      },
+      "id": "15f334fe-7083-4d84-822e-d57af403647c",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        800
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Solução de Problemas\n\n* **Formulário não carrega (erro 404):**\n   * Certifique-se de que o fluxo de trabalho esteja ativo.\n   * Verifique se a URL pública do nó Solicitação de prompt está correta e acessível.\n   * Verifique a variável de ambiente N8N_ENDPOINT_WEBHOOK da sua instância n8n se estiver usando um caminho de webhook personalizado ou proxy reverso.\n* **Falha na geração de prompts (erro LLM):**\n   * Verifique os logs de execução do n8n para os nós Gerar prompt e Gemini 2.5 Flash.\n   * Verifique se a sua credencial da API do Google Palm é válida e tem permissões suficientes.\n   * Certifique-se de que a sua chave da API do Google Gemini esteja configurada corretamente e não tenha expirado.\n   * Verifique os limites de taxa da API no lado do Google Gemini.\n* **Redirecionamento Não Funciona / Página em Branco:**\n   * Confirme se o fluxo de trabalho está ativo.\n   * Verifique se o As variáveis de ambiente WEBHOOK_URL e N8N_ENDPOINT_WEBHOOK estão definidas corretamente na sua instância n8n. A URL de redirecionamento deve ser válida e apontar de volta para a sua instância n8n.\n   * Verifique os logs de execução dos nós Ir para o Site e Obter Página Web do Prompt para ver se há erros.\n* **Prompt não exibido corretamente na página:**\n   * Embora improvável devido ao uso de JSON.stringify e textContent, caracteres muito incomuns no prompt gerado podem causar problemas de renderização.\n   * Certifique-se de que o JavaScript do seu navegador esteja habilitado.",
+        "height": 560,
+        "width": 760,
+        "color": 3
+      },
+      "id": "fabcdc00-30b1-42d1-b8f7-fbef4d2f9a29",
+      "name": "Sticky Note9",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        1280
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json['Qual prompt você quer ?'] }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an expert prompt generator for AI language models. This is what you output :\n{{ $json['Select Sections'].includes('System Instructions') ? \"\\n<role>\\nThe role that the AI should take (for the system prompt)\\n</role>\\n\" : \"\" }}\n<instructions>\n<goal>\nThe goal or task at hand\n</goal>\n\n<context>\nAll the context for the task or goal\n</context>\n{{ $json['Select Sections'].includes('Examples') ? \"\\n<examples>\\n<example_1>\\n<inputs>\\n<...>\\n...\\n</...>\\n</inputs>\\n<output>\\n...\\n</output>\\n</example_1>\\n...\\n</examples>\\n\" : \"\" }}\n\n<output_format>\n...\n</output_format>\n</instructions>{{ $json['Select Sections'].includes('Inputs') ? \n\"\\n\\n<inputs>\\n<[input_tag]>\\n[USE FILLER TEXT TO EXPLAIN WHAT TO PUT HERE]\\n</[input_tag]>\\n...\\n</inputs>\" : \"\" }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "2a28b44f-bc58-4d0b-b127-98c8b10dc89f",
+      "name": "Geração do Prompt",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        1500,
+        480
+      ],
+      "typeVersion": 1.7
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "redirect",
+        "redirectUrl": "={{ $('Prompt de Solicitação').item.json.WEBHOOK_URL + ($('Prompt de Solicitação').item.json.N8N_ENDPOINT_WEBHOOK ?? \"webhook\") }}/prompt/result?prompt={{ $json.text.urlEncode() }}"
+      },
+      "id": "ec8eaa13-05b0-4cc2-a487-51da8b8072dc",
+      "name": "Ir Para o Site",
+      "type": "n8n-nodes-base.form",
+      "position": [
+        2160,
+        480
+      ],
+      "webhookId": "65b26fc2-22c6-424f-85c9-f91502a02d72",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "formTitle": "Criador de Prompts de IA",
+        "formDescription": "Deixe a IA criar seu Prompt perfeito...",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Qual prompt você quer ?",
+              "fieldType": "textarea",
+              "placeholder": "Fale sobre o objetivo do Prompt, qualquer contexto relacionado e qualquer formato de entrada (ex: variáveis ​​de entrada). Você também pode fornecer exemplos de saída.",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Select Sections",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "System Instructions"
+                  },
+                  {
+                    "option": "Examples"
+                  },
+                  {
+                    "option": "Inputs"
+                  }
+                ]
+              },
+              "multiselect": true
+            },
+            {
+              "fieldType": "hiddenField",
+              "fieldName": "WEBHOOK_URL",
+              "fieldValue": "https://n8n-prm.onrender.com/"
+            },
+            {
+              "fieldType": "hiddenField",
+              "fieldName": "N8N_ENDPOINT_WEBHOOK",
+              "fieldValue": "webhook"
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "appendAttribution": false,
+          "buttonLabel": "Crie o Prompt",
+          "path": "prompt-maker",
+          "customCss": "/* --- ROOT VARIABLES (DARK THEME) --- */\n:root {\n\t/* --- FONT MAPPING --- */\n\t--font-family: 'Inter', sans-serif;\n\t--font-weight-normal: 400;\n\t--font-weight-bold: 600;\n\t--font-size-body: 12px;\n\t--font-size-label: 14px;\n\t--font-size-test-notice: 12px;\n\t--font-size-input: 14px;\n\t--font-size-header: 20px;\n\t--font-size-paragraph: 14px;\n\t--font-size-link: 12px;\n\t--font-size-error: 12px;\n\t--font-size-html-h1: 28px;\n\t--font-size-html-h2: 20px;\n\t--font-size-html-h3: 16px;\n\t--font-size-html-h4: 14px;\n\t--font-size-html-h5: 12px;\n\t--font-size-html-h6: 10px;\n\t--font-size-subheader: 14px;\n\n\t/* --- COLOR MAPPING (Dark Theme) --- */\n\t--color-background: #1a1b26;\n\t--color-card-bg: #24283b;\n\t--color-input-bg: #1e202e;\n\t--color-card-border: #414868;\n\t--color-header: #ffffff;\n\t--color-label: #c0caf5;\n\t--color-input-text: #c0caf5;\n\t--color-header-subtext: #c0caf5;\n\t--color-html-text: #c0caf5;\n\t--color-input-border: #414868;\n\t--color-focus-border: #7aa2f7;\n\t--color-link: #9eceff;\n\t--color-html-link: #7aa2f7;\n\t--color-submit-btn-bg: #7aa2f7;\n\t--color-submit-btn-hover-bg: #9eceff;\n\t--color-submit-btn-text: #ffffff; /* CORRECTED: Changed back to white for better readability */\n\t--color-clear-button-bg: #414868;\n\t--color-error: #f7768e;\n\t--color-required: #f7768e;\n\t--color-test-notice-text: #c0caf5;\n\t--color-test-notice-bg: #2a2f41;\n\t--color-test-notice-border: #7aa2f7;\n\n\t/* --- BORDER RADII & SPACING --- */\n\t--border-radius-card: 12px;\n\t--border-radius-input: 6px;\n\t--border-radius-clear-btn: 50%;\n\t--card-border-radius: 12px;\n\t--padding-container-top: 24px;\n\t--padding-card: 24px;\n\t--padding-test-notice-vertical: 12px;\n\t--padding-test-notice-horizontal: 24px;\n\t--margin-bottom-card: 16px;\n\t--padding-form-input: 12px;\n\t--card-padding: 24px;\n\t--card-margin-bottom: 16px;\n\n\t/* --- DIMENSIONS --- */\n\t--container-width: 500px;\n\t--submit-btn-height: 48px;\n\t--checkbox-size: 18px;\n\n\t/* --- OTHER MAPPINGS --- */\n\t--box-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.3);\n\t--color-card-shadow: rgba(0, 0, 0, 0.3);\n\t--opacity-placeholder: 0.5;\n}\n\n/* === GLOBAL & ELEMENT-SPECIFIC FIXES === */\n\n/* 1. Add the dot grid background to the page */\nbody {\n    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);\n    background-size: 20px 20px;\n}\n\n/* 2. Explicitly style the TEXTAREA */\n/* Targets the specific class n8n uses */\ntextarea.form-input {\n    background-color: var(--color-input-bg);\n    color: var(--color-input-text);\n    font-family: var(--font-family); /* Force font inheritance */\n}\ntextarea.form-input::placeholder {\n    color: var(--color-input-text);\n    opacity: var(--opacity-placeholder);\n}\n\n/* 3. Explicitly style the BUTTON */\nbutton.submit-btn {\n    transition: background-color 0.2s ease;\n    font-family: var(--font-family); /* Force font inheritance */\n    font-weight: var(--font-weight-bold);\n    color: var(--color-submit-btn-text); /* Ensure text color is applied */\n}\nbutton.submit-btn:hover {\n    background-color: var(--color-submit-btn-hover-bg);\n}\n\n/* 4. Completely new CHECKBOX styling for n8n's structure */\n/* Target the label that wraps the checkbox and text */\nlabel.multiselect-label {\n    display: flex;\n    align-items: center;\n    cursor: pointer;\n    position: relative;\n}\n/* Target the text part of the label */\nlabel.multiselect-label span {\n    padding-left: 12px; /* Space between box and text */\n}\n/* Hide the default browser checkbox */\nlabel.multiselect-label input[type=\"checkbox\"] {\n    appearance: none;\n    -webkit-appearance: none;\n    position: absolute;\n    opacity: 0;\n    cursor: pointer;\n    height: 0;\n    width: 0;\n}\n/* Create a custom checkbox box using a pseudo-element on the text span */\nlabel.multiselect-label span::before {\n    content: '';\n    position: absolute;\n    left: 0;\n    top: 50%;\n    transform: translateY(-50%);\n    width: var(--checkbox-size);\n    height: var(--checkbox-size);\n    background-color: var(--color-input-bg);\n    border: 1px solid var(--color-input-border);\n    border-radius: 4px;\n    transition: all 0.2s ease;\n}\n/* Style the custom box when the (hidden) checkbox is checked */\nlabel.multiselect-label input[type=\"checkbox\"]:checked + span::before {\n    background-color: var(--color-focus-border);\n    border-color: var(--color-focus-border);\n    /* Add a checkmark using an embedded SVG */\n    background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e\");\n    background-position: center;\n    background-repeat: no-repeat;\n}\n/* Add a focus ring for accessibility */\nlabel.multiselect-label input[type=\"checkbox\"]:focus-visible + span::before {\n    outline: 2px solid var(--color-focus-border);\n    outline-offset: 2px;\n}"
+        }
+      },
+      "id": "08f94b16-30ac-451f-8af5-dbcac02dcb2e",
+      "name": "Prompt de Solicitação",
+      "type": "n8n-nodes-base.formTrigger",
+      "position": [
+        1000,
+        480
+      ],
+      "webhookId": "bef818b2-581a-44ad-bd07-a8b26cfb5b8c",
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "path": "prompt/result",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "8621befe-48ab-4aee-849a-2c2e92c024ed",
+      "name": "Prompt da Página Web",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        1000,
+        1520
+      ],
+      "webhookId": "99651075-3d83-4d67-963f-06c7a5e6a3d3",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Criador de Prompt para IA</title>\n    \n    <!-- Fonts from Google Fonts for a professional look -->\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n    <link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap\" rel=\"stylesheet\">\n\n    <style>\n        /* --- Reset and Base Styles --- */\n        :root {\n            --bg-color: #1a1b26;\n            --card-bg: #24283b;\n            --code-bg: #1e202e; /* Slightly different bg for the code block */\n            --text-color: #c0caf5;\n            --header-color: #ffffff;\n            --accent-color: #7aa2f7;\n            --accent-hover: #9eceff;\n            --success-color: #9ece6a;\n            --border-color: #414868;\n            --shadow-color: rgba(0, 0, 0, 0.3);\n        }\n\n        * {\n            margin: 0;\n            padding: 0;\n            box-sizing: border-box;\n        }\n\n        body {\n            font-family: 'Inter', sans-serif;\n            background-color: var(--bg-color);\n            color: var(--text-color);\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            min-height: 100vh;\n            padding: 2rem;\n            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);\n            background-size: 20px 20px;\n        }\n\n        /* --- Main Container --- */\n        .container {\n            width: 100%;\n            max-width: 900px;\n            background-color: var(--card-bg);\n            border-radius: 12px;\n            border: 1px solid var(--border-color);\n            box-shadow: 0 10px 30px var(--shadow-color);\n            overflow: hidden;\n            display: flex;\n            flex-direction: column;\n        }\n\n        /* --- Card Header --- */\n        .header {\n            padding: 1.5rem 2rem;\n            border-bottom: 1px solid var(--border-color);\n        }\n\n        .header h1 {\n            font-size: 1.8rem;\n            font-weight: 700;\n            color: var(--header-color);\n            margin-bottom: 0.25rem;\n        }\n\n        .header p {\n            font-size: 1rem;\n            color: var(--text-color);\n        }\n\n        /* --- Prompt Content --- */\n        .prompt-content {\n            position: relative;\n            padding: 2rem;\n            padding-top: 4.5rem; /* Space for the copy button */\n        }\n\n        /* --- Markdown-style Code Block --- */\n        pre {\n            background-color: var(--code-bg);\n            border: 1px solid var(--border-color);\n            border-radius: 8px;\n            padding: 1.5rem;\n            font-family: 'Fira Code', monospace;\n            font-size: 0.9rem;\n            line-height: 1.6;\n            color: var(--text-color);\n            \n            /* KEY FOR TEXT WRAPPING */\n            white-space: pre-wrap;\n            overflow-wrap: break-word;\n        }\n\n        /* --- Copy Button --- */\n        .copy-button {\n            position: absolute;\n            top: 1.5rem;\n            right: 1.5rem;\n            background-color: var(--border-color);\n            color: var(--text-color);\n            border: none;\n            border-radius: 6px;\n            padding: 0.6rem 1rem;\n            font-family: 'Inter', sans-serif;\n            font-weight: 500;\n            font-size: 0.9rem;\n            cursor: pointer;\n            display: flex;\n            align-items: center;\n            gap: 0.5rem;\n            transition: background-color 0.2s ease, color 0.2s ease;\n            z-index: 10; /* Ensure it's above the <pre> block */\n        }\n\n        .copy-button:hover {\n            background-color: var(--accent-color);\n            color: var(--header-color);\n        }\n\n        .copy-button.copied {\n            background-color: var(--success-color);\n            color: var(--bg-color);\n        }\n\n        .copy-button svg {\n            width: 16px;\n            height: 16px;\n            stroke-width: 2;\n        }\n\n        /* --- Footer --- */\n        .footer {\n            text-align: center;\n            padding: 1rem;\n            font-size: 0.8rem;\n            color: var(--border-color);\n            border-top: 1px solid var(--border-color);\n        }\n\n        .footer a {\n            color: var(--accent-color);\n            text-decoration: none;\n            transition: color 0.2s ease;\n        }\n\n        .footer a:hover {\n            color: var(--accent-hover);\n        }\n    </style>\n</head>\n<body>\n\n    <div class=\"container\">\n        <header class=\"header\">\n            <h1>Seu Prompt Personalizado</h1>\n            <p>Use o botão a direita para copiar o prompt inteiro para sua área de transferência.</p>\n        </header>\n\n        <main class=\"prompt-content\">\n            <button id=\"copy-btn\" class=\"copy-button\">\n                <svg id=\"copy-icon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"9\" width=\"13\" height=\"13\" rx=\"2\" ry=\"2\"></rect><path d=\"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\"></path></svg>\n                <svg id=\"check-icon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"display: none;\"><polyline points=\"20 6 9 17 4 12\"></polyline></svg>\n                <span id=\"copy-text\">Copy</span>\n            </button>\n\n            <!-- \n                This block is now a simple placeholder.\n                We will populate it using JavaScript to ensure the prompt text,\n                including all its tags, is displayed literally.\n            -->\n            <pre><code id=\"prompt-display-code\"></code></pre>\n        </main>\n        \n        <footer class=\"footer\">\n            <p>Generated with ❤️ by <a href=\"https://n8n.partnerlinks.io/g3yh568uv03t\" target=\"_blank\" rel=\"noopener noreferrer\">n8n</a></p>\n        </footer>\n    </div>\n\n    <!-- \n        This is the most important part for perfect copy/display.\n        We embed the raw prompt data into a JavaScript variable.\n        JSON.stringify() escapes any special characters, making it a valid JS string.\n    -->\n    <script>\n        const rawPromptToCopy = {{ JSON.stringify($json.query.prompt) }};\n    </script>\n\n    <script>\n        document.addEventListener('DOMContentLoaded', () => {\n            // --- Part 1: Display the prompt safely ---\n            const promptDisplayElement = document.getElementById('prompt-display-code');\n            if (promptDisplayElement) {\n                // Using .textContent is the key. It tells the browser to treat\n                // the string as plain text, not as HTML. This automatically\n                // displays '<' and '>' characters correctly.\n                promptDisplayElement.textContent = rawPromptToCopy;\n            }\n\n            // --- Part 2: Handle the copy functionality ---\n            const copyButton = document.getElementById('copy-btn');\n            const copyText = document.getElementById('copy-text');\n            const copyIcon = document.getElementById('copy-icon');\n            const checkIcon = document.getElementById('check-icon');\n\n            copyButton.addEventListener('click', () => {\n                // The clipboard API copies the raw, unmodified string.\n                navigator.clipboard.writeText(rawPromptToCopy)\n                    .then(() => {\n                        // Success feedback\n                        copyText.textContent = 'Copied!';\n                        copyButton.classList.add('copied');\n                        copyIcon.style.display = 'none';\n                        checkIcon.style.display = 'inline-block';\n\n                        // Reset the button after 2 seconds\n                        setTimeout(() => {\n                            copyText.textContent = 'Copy';\n                            copyButton.classList.remove('copied');\n                            copyIcon.style.display = 'inline-block';\n                            checkIcon.style.display = 'none';\n                        }, 2000);\n                    })\n                    .catch(err => {\n                        console.error('Failed to copy: ', err);\n                        copyText.textContent = 'Error';\n                        setTimeout(() => { copyText.textContent = 'Copy'; }, 2000);\n                    });\n            });\n        });\n    </script>\n\n</body>\n</html>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=UTF-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "486141c0-8069-4688-8604-a240f706f079",
+      "name": "Exibe a Página Web",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        1560,
+        1520
+      ],
+      "typeVersion": 1.1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gemini 2.5 Flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Geração do Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Geração do Prompt": {
+      "main": [
+        [
+          {
+            "node": "Ir Para o Site",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ir Para o Site": {
+      "main": [
+        []
+      ]
+    },
+    "Prompt de Solicitação": {
+      "main": [
+        [
+          {
+            "node": "Geração do Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prompt da Página Web": {
+      "main": [
+        [
+          {
+            "node": "Exibe a Página Web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e9417095-a34c-4fb7-904d-464ad7c6344e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f8fb8b7c9f227cabfd3532e55a910625bd5265edfac26d35ea7f1663405904ec"
+  },
+  "id": "sAibYjPrTkq7lGDU",
+  "tags": [
+    {
+      "name": "Gemini",
+      "id": "gwCsSs42swjsPHn5",
+      "createdAt": "2025-07-01T16:49:53.545Z",
+      "updatedAt": "2025-07-01T16:49:53.545Z"
+    }
+  ]
+}

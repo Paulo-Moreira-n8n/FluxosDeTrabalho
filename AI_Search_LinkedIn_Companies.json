@@ -1,0 +1,754 @@
+{
+  "name": "AI-Search LinkedIn Companies",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "cf4cc907-5c41-4879-9f2a-5cc21f86dac0",
+      "name": "Process Each Company",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        520,
+        780
+      ],
+      "typeVersion": 3,
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.ghostgenius.fr/v2/company",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.url }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "id": "98800fd2-f8c5-48cd-93c6-4c11a2433369",
+      "name": "Get Company Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        760,
+        780
+      ],
+      "retryOnFail": true,
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1UPpASNHeZ9l0lxi",
+          "name": "Autenticação no Serviço do  Ghost Genius LinkedIn"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "5ea943a6-8f6c-4cb0-b194-8c92d4b2aacc",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.website }}",
+              "rightValue": "[null]"
+            },
+            {
+              "id": "8235b9bb-3cd4-4ed4-a5dc-921127ff47c7",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "leftValue": "={{ $json.followers_count }}",
+              "rightValue": 200
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "20135418-8667-40fb-8065-bd8be9cd5044",
+      "name": "Filter Valid Companies",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        980,
+        780
+      ],
+      "typeVersion": 2.2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "050c33be-c648-44d7-901c-51f6ff024e97",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              },
+              "leftValue": "={{ $('Check If Company Exists').all().first().json }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0bb5e019-d622-4328-a953-1dbdba234174",
+      "name": "Is New Company?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1380,
+        780
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e81e4891-4786-4dd9-a338-d1095e27f382",
+              "name": "Your target",
+              "type": "string",
+              "value": "Growth Marketing Agency"
+            },
+            {
+              "id": "ed2b6b08-66aa-4d4b-b68c-698b5e841930",
+              "name": "B: 1-10 employees, C: 11-50 employees, D: 51-200 employees, E: 201-500 employees, F: 501-1000 employees, G: 1001-5000 employees, H: 5001-10,000 employees, I: 10,001+ employees",
+              "type": "string",
+              "value": "C"
+            },
+            {
+              "id": "f1d02f1a-8115-4e0c-a5ec-59bf5b54263b",
+              "name": "Location (find it on : https://www.ghostgenius.fr/tools/search-sales-navigator-locations-id)",
+              "type": "string",
+              "value": "103644278"
+            },
+            {
+              "id": "21bdb871-9327-4553-bb4a-a138be9f735c",
+              "name": "Your product or service",
+              "type": "string",
+              "value": "our CRM implementation services"
+            },
+            {
+              "id": "31f5adfc-8a8f-498c-9e57-24584c42f7de",
+              "name": "Positive indicators (3-5 specific factors that indicate a company might need your product)",
+              "type": "string",
+              "value": "- Mentions challenges with customer relationships or sales processes \n- Company is in growth phase with expanding client base \n- Mentions need for better data organization or customer insights \n- References marketing automation, sales pipelines, or customer retention "
+            },
+            {
+              "id": "630807cb-9d06-41ee-8534-a652ed76cb4c",
+              "name": "Negative indicators (3-5 specific factors that indicate a company might NOT need your product)",
+              "type": "string",
+              "value": "- Very small companies (1-5 employees) or extremely large enterprises \n- Already mentions using advanced CRM solutions \n- No indication of sales process or customer relationship management in description \n- Pure manufacturing or product-based business with minimal customer interaction \n- Non-profit or government entity with unique relationship management needs"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8d98c126-cb54-4311-aa61-6e68dc5f4c1a",
+      "name": "Set Variables",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -220,
+        780
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "url": "https://api.ghostgenius.fr/v2/search/companies",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "keywords",
+              "value": "={{ $json['Your target'] }}"
+            },
+            {
+              "name": "locations",
+              "value": "={{ $json['Location (find it on : https://www'].ghostgenius['fr/tools/search-sales-navigator-locations-id)'] }}"
+            },
+            {
+              "name": "company_size",
+              "value": "={{ $json['B: 1-10 employees, C: 11-50 employees, D: 51-200 employees, E: 201-500 employees, F: 501-1000 employees, G: 1001-5000 employees, H: 5001-10,000 employees, I: 10,001+ employees'] }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "name": "page",
+                    "value": "={{ $pageCount + 1 }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ $response.body.data.isEmpty() }}",
+              "limitPagesFetched": true,
+              "maxRequests": 3,
+              "requestInterval": 2000
+            }
+          }
+        }
+      },
+      "id": "89a42b0e-110c-47a6-9141-b48be09cf0b8",
+      "name": "Search Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -20,
+        780
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1UPpASNHeZ9l0lxi",
+          "name": "Autenticação no Serviço do  Ghost Genius LinkedIn"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "c453ff9f-0c31-440d-8cbb-f61b9281a19d",
+      "name": "Extract Company Data",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        180,
+        780
+      ],
+      "typeVersion": 1,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1zhPbL31Z9iTBn-L7adIhuu08tHKDKopD7hhePjCZNdY",
+          "mode": "list",
+          "cachedResultName": "CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zhPbL31Z9iTBn-L7adIhuu08tHKDKopD7hhePjCZNdY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Companies",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zhPbL31Z9iTBn-L7adIhuu08tHKDKopD7hhePjCZNdY/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "ID",
+              "lookupValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d229f1ab-0754-4936-a319-7d6df53973b1",
+      "name": "Check If Company Exists",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1200,
+        780
+      ],
+      "typeVersion": 4.5,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rEw1WwUPi5S0Ya6B",
+          "name": "Autenticação na API do Planilhas Google"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Busca de Empresas no LinkedIn\nEsta seção inicia o Workflow e busca suas empresas-alvo no LinkedIn usando a API Ghost Genius.\n\nVocê pode filtrar e refinar sua busca usando palavras-chave, tamanho da empresa, localização, setor ou até mesmo se a empresa possui vagas de emprego ativas. Use o nó \"Set Variables\" para isso (este nó também permite personalizar o prompt de Pontuação de Leads de IA).\n\nObserve que você pode recuperar no máximo 1.000 empresas por busca (correspondente a 100 páginas do LinkedIn), portanto, é importante não exceder essa quantidade de resultados para evitar a perda de clientes em potencial.\n\nExemplo: Digamos que eu queira segmentar Agências de Marketing em Crescimento com 11 a 50 funcionários. Faço minha busca e vejo que há 10.000 resultados. Então, eu refino minha pesquisa usando a localização para ir país por país e recuperar todos os 10.000 resultados em vários lotes, variando de 500 a 1.000, dependendo do país.\n\nDica: Para testar o Workflow ou ver a quantidade de resultados da sua busca, altere o parâmetro de paginação (Max Pages) no Nó \"Search Companies\". Ele será exibido na parte superior da resposta JSON.",
+        "height": 620,
+        "width": 860,
+        "color": 6
+      },
+      "id": "670ade4f-c03a-48c8-88e3-d77a84d17644",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -500,
+        400
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Processamento de Dados da Empresa \nEsta seção processa cada empresa individualmente.\n\nRecuperamos todas as informações da empresa usando o Nó \\\"Get Company Info\\\" e o link do LinkedIn obtido na seção anterior.\n\nEm seguida, escolhemos a empresa com base na quantidade de seguidores, o que nos dá uma primeira indicação da credibilidade da empresa (200 neste caso) e se a página dela no LinkedIn tem um site listado.\n\nO fluxo de trabalho implementa o processamento em lote com um atraso de 2 segundos entre as solicitações para respeitar os limites de taxa da API. Essa abordagem metódica garante a coleta confiável de dados, evitando timeouts da API.\n\nVocê pode ajustar esses limites com base no seu mercado-alvo, aumentando a contagem de seguidores para empresas mais estabelecidas ou diminuindo-a para mercados emergentes.\n\nOs dois últimos módulos verificam se a empresa já existe em seu banco de dados (usando o ID do LinkedIn) para evitar duplicatas, pois, quando você faz pesquisas detalhadas o suficiente, algumas empresas podem aparecer várias vezes.",
+        "height": 660,
+        "width": 1120,
+        "color": 4
+      },
+      "id": "f103381b-86dd-449f-ab6c-057ef79b8d62",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        440,
+        400
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Pontuação pela IA e Armazenamento\nEsta seção pontua a empresa e a armazena em uma Planilha Google.\n\nÉ importante preencher corretamente o nó \"Set variables\" no início do fluxo de trabalho para obter um resultado relevante para o seu caso de uso. Você também pode modificar manualmente o prompt do sistema.\n\nIndependentemente da pontuação obtida, é muito importante sempre armazenar a empresa. Observe que adicionamos um nó \"wait\" de 2 segundos para respeitar os limites de taxa do Planilhas Google.\n\nAdicionamos a empresa à planilha \"Companies\" nesta [Planilha Google](https://docs.google.com/spreadsheets/d/1LfhqpyjimLjyQcmWY8mUr6YtNBcifiOVLIhAJGV9jiM/edit?usp=sharing) a qual você pode fazer uma cópia e usar.\n\nEssa funcionalidade de pontuação de IA é extremamente impressionante quando perfeitamente configurada, então recomendo reservar um tempo para testar com várias empresas para garantir que o sistema de pontuação funcione bem para suas necessidades!\n\n",
+        "height": 660,
+        "width": 820,
+        "color": 5
+      },
+      "id": "049485ad-18ad-47af-8fa6-97fadb7e8cae",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1640,
+        400
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "amount": 4
+      },
+      "id": "ee7051a7-2bf6-41ed-bb1d-2b6871af2f8d",
+      "name": "Wait 2s",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        2080,
+        720
+      ],
+      "webhookId": "d22fd305-d8f6-4fc3-8a96-62386fa30f94",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1zhPbL31Z9iTBn-L7adIhuu08tHKDKopD7hhePjCZNdY",
+          "mode": "list",
+          "cachedResultName": "CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zhPbL31Z9iTBn-L7adIhuu08tHKDKopD7hhePjCZNdY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Companies",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zhPbL31Z9iTBn-L7adIhuu08tHKDKopD7hhePjCZNdY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Get Company Info').item.json.name }}",
+            "Website": "={{ $('Get Company Info').item.json.website }}",
+            "LinkedIn": "={{ $('Get Company Info').item.json.url }}",
+            "ID": "={{ $('Get Company Info').item.json.id }} ",
+            "Summary": "={{ $('Get Company Info').item.json.description }}",
+            "Score": "={{ $json.output }}",
+            "State": "Qualified"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn",
+              "displayName": "LinkedIn",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "id": "2b0a85e8-1e50-42d2-9bde-96e128010e0b",
+      "name": "Add Company to CRM",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2280,
+        840
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rEw1WwUPi5S0Ya6B",
+          "name": "Autenticação na API do Planilhas Google"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Introdução\nAntes de explicar como configurar este modelo, é importante saber o seguinte:\n\nEsta automação é uma versão alternativa [deste modelo](https://n8n.io/workflows/3717-search-linkedin-companies-and-add-them-to-airtable-crm/) que se diferencia por usar o Planilhas Google em vez do Airtable e adicionar um sistema de pontuação de leads, permitindo maior precisão na segmentação.\n\nPortanto, esta automação permite que você, a partir de uma pesquisa no LinkedIn, enriqueça os dados da empresa e as classifique para determinar se elas podem estar interessadas ​​em seus serviços/produtos.",
+        "height": 380,
+        "width": 600
+      },
+      "id": "f1f2b362-36fb-401d-99ee-4fc923496bbf",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -60,
+        -40
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Configuração\n- Crie uma conta na [Ghost Genius API](https://www.ghostgenius.fr) e obtenha sua chave de API.\n\n- Configure os Nós \\\"Search Companies\\\" e \\\"Get Company Info\\\" criando uma credencial de \"Cabeçalho de Autenticação\":\n**Name: \"Authorization\"**\n**Value: \"Bearer api_key\"**\n\n- Crie uma cópia desta [Planilha Google](https://docs.google.com/spreadsheets/d/1LfhqpyjimLjyQcmWY8mUr6YtNBcifiOVLIhAJGV9jiM/edit?usp=sharing) clicando em Arquivo => Fazer uma cópia (na Planilha Google).\n\n- Configure sua credencial da Planilha Google seguindo a documentação do n8n.\n\n- Crie uma chave OpenAI [aqui](https://platform.openai.com/docs/overview) e adicione a credencial ao Nó \"AI Company Scoring\" seguindo a documentação do n8n.\n\n- Adicione suas informações ao nó \"Set Variables\".",
+        "height": 380,
+        "width": 600
+      },
+      "id": "1cec6ee1-ad4a-4cf1-8ee1-1f11ec47fc1c",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        700,
+        -40
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Ferramentas \n**(Você pode usar a API e o CRM de sua escolha; esta é apenas uma sugestão)**\n\n- API Linkedin: [Ghost Genius API](https://ghostgenius.fr) \n\n- Documentação da API: [Documentation](https://ghostgenius.fr/docs)\n\n- CRM : [Planilha Google](https://workspace.google.com/intl/en/products/sheets/)\n\n- Inteligência Artificial : [OpenAI](https://openai.com)\n\n- Buscador de ID de localização do LinkedIn : [Ghost Genius Locations ID Finder](https://ghostgenius.fr/tools/search-sales-navigator-locations-id)",
+        "height": 380,
+        "width": 600
+      },
+      "id": "04ff4e1f-25cc-4298-ad21-e8cb148d7ded",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1440,
+        -40
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {},
+      "id": "ea8407dd-55a3-45f4-9f09-515c45b35392",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -420,
+        780
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1720,
+        880
+      ],
+      "id": "743213aa-6eff-47e4-831e-edd7f13e6112",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "KLOjPafXT6lpXUzk",
+          "name": "Autenticação na API do Google Gemini (PaLM)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Aqui está a empresa a ser analisada:\nNome: {{ $('Filter Valid Companies').item.json.name }}\n{{ $('Filter Valid Companies').item.json.tagline }}\n{{ $('Filter Valid Companies').item.json.description }}\nQuantidade de funcionários: {{ $('Filter Valid Companies').item.json.staff_count }}\nSetor Econômico: {{ $('Filter Valid Companies').item.json.industries }}\nEspecialidades: {{ $('Filter Valid Companies').item.json.specialities }}\nLocalização: {{ $('Filter Valid Companies').item.json.locations?.toJsonString() }}\nFundação: {{ $('Filter Valid Companies').item.json.founded_on }}\nCapital Empresarial: \n{{ $('Filter Valid Companies').item.json.funding }}",
+        "options": {
+          "systemMessage": "Você é um assistente de IA que avalia empresas para determinar se elas podem estar interessadas em {{ $('Set Variables').item.json['Your product or service'] }}.\n\nAvalie as informações fornecidas pela empresa em uma escala de 0 a 10, onde:\n- 0 = Nenhuma probabilidade de interesse\n- 10 = Extrema probabilidade de interesse\n\nBaseie sua avaliação nestes critérios:\n1. Adequação ao setor econômico: quão bem o setor econômico da empresa se alinha com {{ $('Set Variables').item.json['Your product or service'] }}?\n2. Perfil da empresa: o tamanho, o estágio de crescimento e a localização da empresa são adequados para {{ $('Set Variables').item.json['Your product or service'] }}?\n3. Pontos problemáticos: Com base na descrição, é provável que elas tenham desafios que {{ $('Set Variables').item.json['Your product or service'] }} solucione?\n\nFatores que indicam uma boa adequação:\n{{ $('Set Variables').item.json['Positive indicators (3-5 specific factors that indicate a company might need your product)'] }}\n\nFatores que indicam uma adequação ruim:\n{{ $('Set Variables').item.json['Negative indicators (3-5 specific factors that indicate a company might NOT need your product)'] }}\n\nResponda SOMENTE como número"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        1740,
+        720
+      ],
+      "id": "7b9a7b5e-af36-4821-b064-db79fee970b0",
+      "name": "AI Company Scoring"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s": {
+      "main": [
+        [
+          {
+            "node": "Add Company to CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Variables": {
+      "main": [
+        [
+          {
+            "node": "Search Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is New Company?": {
+      "main": [
+        [
+          {
+            "node": "AI Company Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process Each Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Company Info": {
+      "main": [
+        [
+          {
+            "node": "Filter Valid Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Companies": {
+      "main": [
+        [
+          {
+            "node": "Extract Company Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Company to CRM": {
+      "main": [
+        [
+          {
+            "node": "Process Each Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Company Data": {
+      "main": [
+        [
+          {
+            "node": "Process Each Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Each Company": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get Company Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Valid Companies": {
+      "main": [
+        [
+          {
+            "node": "Check If Company Exists",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process Each Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Company Exists": {
+      "main": [
+        [
+          {
+            "node": "Is New Company?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Company Scoring",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Company Scoring": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "67232bdd-b756-4309-ae43-1ce1f49fd55a",
+  "meta": {
+    "instanceId": "f8fb8b7c9f227cabfd3532e55a910625bd5265edfac26d35ea7f1663405904ec"
+  },
+  "id": "WarMKZ5hQ1B0AJcG",
+  "tags": [
+    {
+      "createdAt": "2025-07-01T16:28:45.505Z",
+      "updatedAt": "2025-07-01T16:28:45.505Z",
+      "id": "XfIlSDFNHPz9qEBE",
+      "name": "ghostgenius"
+    }
+  ]
+}
